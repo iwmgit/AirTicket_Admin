@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -493,7 +493,6 @@ export default function FlightManagement() {
                 {searchResults.map((flight) => (
                   <tr key={flight.bundle_key} className="hover:bg-gray-50">
                     <td className="p-4">
-                      <input type="checkbox" />
                     </td>
 
                     <td className="p-4 text-xs">
@@ -560,7 +559,11 @@ export default function FlightManagement() {
                       <div className="flex gap-2">
                         <button
                           onClick={() =>
-                            navigate(`/admin/flights/${flight.bundle_key}`)
+                            navigate(`/admin/flights/${flight.bundle_key}`, {
+                              state: {
+                                flightData: flight,
+                              },
+                            })
                           }
                           className="border px-3 py-1 text-xs rounded hover:bg-gray-100"
                         >

@@ -222,6 +222,12 @@ export const getSecureTicket = async (bookingId) => {
   return response.data;
 };
 
+// Check ticket status
+export const getTicketStatus = async (bookingId) => {
+  const response = await apiClient.get(`/files/status/${bookingId}`);
+  return response.data?.data ?? response.data;
+};
+
 // Get booking audit history
 export const getBookingAudit = async (bookingId) => {
   const response = await apiClient.get(`/admin/bookings/${bookingId}/audit`);

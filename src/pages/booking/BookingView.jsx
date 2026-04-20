@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getBookingById, deleteBooking, getSecureTicket, getBookingAudit } from "../../config/api";
+import { getBookingById, deleteBooking, getSecureTicket, getBookingAudit, getTicketStatus } from "../../config/api";
 
 export default function BookingView() {
   const { bookingId } = useParams();
@@ -9,6 +9,8 @@ export default function BookingView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(false);
+  const [ticketStatus, setTicketStatus] = useState(null);
+  const [ticketStatusLoading, setTicketStatusLoading] = useState(false);
   const [auditData, setAuditData] = useState(null);
   const [auditLoading, setAuditLoading] = useState(false);
   const [showAuditModal, setShowAuditModal] = useState(false);
@@ -22,6 +24,17 @@ export default function BookingView() {
         if (mounted) {
           setBooking(data);
           setLoading(false);
+          
+          // Fetch ticket status
+          try {
+            const status = await getTicketStatus(bookingId);
+            if (mounted) {
+              setTicketStatus(status);
+            }
+          } catch (err) {
+            // Ticket status fetch failed, but don't block booking view
+            console.log("Could not fetch ticket status:", err.message);
+          }
         }
       } catch (err) {
         if (mounted) {
@@ -179,8 +192,8 @@ export default function BookingView() {
               label="Arrival"
               value={extractTravelDate(booking) !== "-" ? new Date(fs.outbound?.arrival_time || fs.arrival_time).toLocaleString() : "—"}
             />
-            <DetailItem label="Duration" value={`${fs.outbound?.duration_minutes} minutes`} />
-            <DetailItem label="Airline Name" value={fs.outbound?.airline} />
+            <DetailItem label="Duration" value={`${fs.outbound?.duration_minutes || fs.duration_minutes || '-'} minutes`} />
+            <DetailItem label="Airline Name" value={fs.outbound?.airline || fs.airline || '-'} />
           </div>
         </section>
 
@@ -254,21 +267,65 @@ export default function BookingView() {
         </section>
 
         {/* Uploaded Ticket File */}
-            <section>
-              <h2 className="text-lg font-semibold mb-4">Ticket File</h2>
-              <div className="border rounded-lg p-4 bg-gray-50 border-gray-200">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm">Download to see the uploaded file.</p>
-                  <button
-                    disabled={downloading}
-                    onClick={handleDownloadTicket}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-60"
-                  >
-                    {downloading ? "Downloading..." : "Download"}
-                  </button>
+        <section>
+          <h2 className="text-lg font-semibold mb-4">Ticket File</h2>
+          {ticketStatus ? (
+            <div className="border rounded-lg p-4">
+              {ticketStatus.has_ticket ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                       Uploaded
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Upload Time</p>
+                      <p className="text-sm font-medium text-gray-800">
+                        {new Date(ticketStatus.ticket_uploaded_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <p className="text-sm text-gray-600">Download uploaded ticket</p>
+                    <button
+                      disabled={downloading}
+                      onClick={handleDownloadTicket}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-60 transition-colors"
+                    >
+                      {downloading ? "Downloading..." : "Download"}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </section>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                      ⚠ Pending
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    No ticket file has been uploaded for this booking yet. Go to the Edit page to upload or manage the ticket.
+                  </p>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => navigate(`/admin/bookings/${bookingId}/booking-edit`)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm transition-colors"
+                    >
+                      Manage Ticket
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="border rounded-lg p-4 bg-gray-50 border-gray-200">
+              <p className="text-sm text-gray-600 animate-pulse">
+                Loading ticket status...
+              </p>
+            </div>
+          )}
+        </section>
       </div>
 
       {/* Buttons */}

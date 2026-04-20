@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getStaffById, updateStaff, deleteStaffById } from "../../config/api";
+import { getStaffById, updateStaff, activateStaff, deactivateStaff } from "../../config/api";
 
 export default function StaffEdit() {
   const navigate = useNavigate();
@@ -42,7 +42,6 @@ export default function StaffEdit() {
       await updateStaff(id, {
         name: form.name,
         email: form.email,
-        phone: form.phone,
         role: form.role,
       });
       alert("Staff member updated successfully");
@@ -54,18 +53,32 @@ export default function StaffEdit() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this staff member?")) {
-      return;
-    }
-
+  const handleToggleStatus = async () => {
     setSaving(true);
+    setError(null);
+
     try {
-      await deleteStaffById(id);
-      alert("Staff member deleted successfully");
-      navigate("/admin/staff");
+      const isCurrentlyActive = form.is_active;
+      
+      if (isCurrentlyActive) {
+        await deactivateStaff(id);
+      } else {
+        await activateStaff(id);
+      }
+      
+      // Refresh staff data
+      const data = await getStaffById(id);
+      setForm(data);
+      alert(
+        isCurrentlyActive
+          ? "Staff member deactivated successfully"
+          : "Staff member activated successfully"
+      );
     } catch (err) {
-      setError(err.message || "Failed to delete staff member");
+      setError(
+        "Failed to update status: " + (err.message || "Unknown error")
+      );
+    } finally {
       setSaving(false);
     }
   };
@@ -75,114 +88,97 @@ export default function StaffEdit() {
   if (!form) return <div className="p-6">Staff member not found</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow border">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
+    <div className="bg-white">
+      {/* Header */}
+      <div className="px-6 py-4 border-b bg-gray-50">
+        <h2 className="text-lg font-semibold">Edit Staff Member</h2>
+        <p className="text-sm text-gray-500 mt-1">Update staff information</p>
+      </div>
+
+      {/* Body */}
+      <div className="p-6 space-y-6">
+        {error && (
+          <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+            {error}
+          </div>
+        )}
+
+        <h3 className="font-medium">Personal Information</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h2 className="text-lg font-semibold">Edit Staff Member</h2>
-            <p className="text-sm text-gray-500">Update staff information</p>
+            <label className="text-sm text-gray-600">Full Name</label>
+            <input
+              name="name"
+              value={form.name || ""}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2 mt-1"
+            />
           </div>
-          <button
-            onClick={() => navigate(-1)}
-            className="text-xl text-gray-500 hover:text-black"
-          >
-            ✕
-          </button>
-        </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-6">
-          {error && (
-            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-              {error}
-            </div>
-          )}
+          <div>
+            <label className="text-sm text-gray-600">Email Address</label>
+            <input
+              name="email"
+              type="email"
+              value={form.email || ""}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2 mt-1"
+            />
+          </div>
 
-          <h3 className="font-medium">Personal Information</h3>
+          <div>
+            <label className="text-sm text-gray-600">Role</label>
+            <input
+              name="role"
+              value={form.role || ""}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2 mt-1"
+            />
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-gray-600">Full Name</label>
-              <input
-                name="name"
-                value={form.name || ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 mt-1"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-gray-600">Email Address</label>
-              <input
-                name="email"
-                type="email"
-                value={form.email || ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 mt-1"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-gray-600">Phone Number</label>
-              <input
-                name="phone"
-                value={form.phone || ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 mt-1"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-gray-600">Role</label>
-              <input
-                name="role"
-                value={form.role || ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 mt-1"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-gray-600">Registration Date</label>
-              <input
-                name="registration"
-                value={form.registration || ""}
-                disabled
-                className="w-full border rounded px-3 py-2 mt-1 bg-gray-100 text-gray-600"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-gray-600">Status</label>
-              <input
-                name="status"
-                value={form.status || ""}
-                disabled
-                className="w-full border rounded px-3 py-2 mt-1 bg-gray-100 text-gray-600"
-              />
+          <div>
+            <label className="text-sm text-gray-600">Status</label>
+            <div className="flex items-center gap-3 mt-1">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  form.is_active
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {form.is_active ? "Active" : "Inactive"}
+              </span>
+              <button
+                type="button"
+                onClick={handleToggleStatus}
+                disabled={saving}
+                className={`px-3 py-1 rounded text-xs font-medium ${
+                  form.is_active
+                    ? "bg-red-100 text-red-700 hover:bg-red-200"
+                    : "bg-green-100 text-green-700 hover:bg-green-200"
+                } disabled:opacity-60`}
+              >
+                {saving
+                  ? "Updating..."
+                  : form.is_active
+                    ? "Deactivate"
+                    : "Activate"}
+              </button>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t">
-          <button
-            onClick={handleDelete}
-            disabled={saving}
-            className="border px-4 py-2 text-sm rounded hover:bg-gray-100 disabled:opacity-50"
-          >
-            Delete Account
-          </button>
-
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="bg-black text-white px-5 py-2 rounded text-sm hover:bg-gray-800 disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
+      {/* Footer */}
+      <div className="flex items-center justify-end px-6 py-4 border-t">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-black text-white px-5 py-2 rounded text-sm hover:bg-gray-800 disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
       </div>
     </div>
   );

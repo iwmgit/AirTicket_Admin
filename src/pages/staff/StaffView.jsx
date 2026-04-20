@@ -61,21 +61,13 @@ export default function StaffView() {
   const activity = staff.activity || {};
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm overflow-hidden">
-      {/* Header / Modal-like title bar */}
-      <div className="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">Staff Details</h2>
-          <p className="text-sm text-gray-500">
-            View staff information and activity
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("/admin/staff")}
-          className="text-gray-500 hover:text-gray-800 text-xl"
-        >
-          ×
-        </button>
+    <div className="bg-white">
+      {/* Header */}
+      <div className="px-6 py-4 border-b bg-gray-50">
+        <h2 className="text-lg font-semibold">Staff Details</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          View staff information
+        </p>
       </div>
 
       <div className="p-6">
@@ -95,12 +87,12 @@ export default function StaffView() {
               </span>
               <span
                 className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                  staff.status === "Active"
+                  staff.is_active
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"
                 }`}
               >
-                {staff.status}
+                {staff.is_active ? "Active" : "Inactive"}
               </span>
             </div>
           </div>
@@ -125,21 +117,6 @@ export default function StaffView() {
                 Email Address
               </label>
               <p className="mt-1 font-medium">{staff.email}</p>
-            </div>
-
-            {/* Doesn't exist in the API response, but we can add it later if needed */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600">
-                Phone Number
-              </label>
-              <p className="mt-1 font-medium">{staff.phone || "N/A"}</p>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-600">
-                Registration Date
-              </label>
-              <p className="mt-1 font-medium">{staff.registration || "N/A"}</p>
             </div>
           </div>
         </div>
@@ -175,12 +152,12 @@ export default function StaffView() {
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 pt-6 border-t">
+        <div className="flex justify-end gap-3 pt-6 border-t px-6 py-6">
           <button
             onClick={() => navigate("/admin/staff")}
             className="px-4 py-2 border rounded text-sm hover:bg-gray-50"
           >
-            Close
+            Back
           </button>
           <button
             onClick={() => navigate(`/admin/staff/${staff.id}/edit`)}

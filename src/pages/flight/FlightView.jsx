@@ -1,159 +1,273 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-// import { getFlightById } from "../../config/api";
 
 export default function FlightView() {
-  const { flightId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [flight, setFlight] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    let mounted = true;
+    // Get flight data from navigation state
+    if (location.state?.flightData) {
+      setFlight(location.state.flightData);
+      setLoading(false);
+    } else {
+      // Fallback: redirect back if no flight data provided
+      setLoading(false);
+      navigate("/admin/flights");
+    }
+  }, [location.state, navigate]);
 
-    const fetchFlight = async () => {
-      try {
-        const data = await getFlightById(flightId);
-        if (mounted) {
-          setFlight(data);
-          setLoading(false);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(err.message);
-          setLoading(false);
-        }
-      }
-    };
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleString();
+  };
 
-    fetchFlight();
+  const formatDuration = (minutes) => {
+    if (!minutes) return "N/A";
+    return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+  };
 
-    return () => {
-      mounted = false;
-    };
-  }, [flightId]);
-
-  function DetailItem({ label, value }) {
-    return (
-      <div>
-        <div className="text-sm text-gray-600">{label}</div>
-        <div className="mt-0.5 font-medium">{value || "—"}</div>
-      </div>
-    );
+  if (loading) {
+    return <div className="p-6 text-center">Loading flight details...</div>;
   }
 
-  if (loading)
-    return <div className="p-6 text-center">Loading flight details...</div>;
-  if (error)
-    return <div className="p-6 text-center text-red-600">Error: {error}</div>;
-  if (!flight) return <div className="p-6 text-center">Flight not found</div>;
+  if (!flight) {
+    return <div className="p-6 text-center">Flight not found</div>;
+  }
+
+  const snapshot = flight?.flight_snapshot || {};
+  const isRoundTrip = flight.type === "ROUND_TRIP";
 
   return (
-    <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-sm">
+    <div className="bg-white">
       {/* Header */}
-      <div className="p-6 border-b flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold">Flight {flight.flightNumber}</h1>
-          <p className="text-gray-600 mt-1">{flight.airline}</p>
-        </div>
-        <span className="bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-sm font-medium">
-          {flight.status}
-        </span>
+      <div className="px-6 py-4 border-b bg-gray-50">
+        <h2 className="text-lg font-semibold">Flight Details</h2>
+        <p className="text-sm text-gray-500 mt-1">View flight information</p>
       </div>
 
-      <div className="p-6 space-y-10">
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Flight Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <DetailItem label="Flight Number" value={flight.flightNumber} />
-            <DetailItem label="Airline" value={flight.airline} />
-            <DetailItem label="Status" value={flight.status} />
-            <DetailItem label="Origin Airport" value={flight.originAirport} />
-            <DetailItem
-              label="Destination Airport"
-              value={flight.destinationAirport}
-            />
-            <DetailItem
-              label="Departure"
-              value={`${flight.departureDate} ${flight.departureTime}`}
-            />
-            <DetailItem
-              label="Arrival"
-              value={`${flight.arrivalDate} ${flight.arrivalTime}`}
-            />
-            <DetailItem label="Duration" value={flight.duration} />
-            <DetailItem label="Aircraft Type" value={flight.aircraftType} />
-          </div>
-        </section>
+      <div className="p-6 space-y-6">
+        {/* Flight Details - Read Only */}
+        <div className="border rounded-md p-5 bg-gray-50">
+          <h3 className="text-sm font-semibold mb-4">Flight Details</h3>
+          
+          {isRoundTrip ? (
+            // ROUND TRIP DISPLAY
+            <div className="space-y-6">
+              {/* Outbound Leg */}
+              <div>
+                <h4 className="font-medium text-gray-700 mb-3">Outbound Flight</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Airline</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.outbound?.airline || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Airline Code</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.outbound?.airline_code || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Flight Number</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.outbound?.flight_number || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Route</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.outbound?.route || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Departure</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.outbound?.departure_time
+                        ? formatDate(snapshot.outbound.departure_time)
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Arrival</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.outbound?.arrival_time
+                        ? formatDate(snapshot.outbound.arrival_time)
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Duration</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.outbound?.duration_minutes
+                        ? formatDuration(snapshot.outbound.duration_minutes)
+                        : "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Capacity & Pricing</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <DetailItem
-              label="Total Capacity"
-              value={`${flight.totalCapacity} seats`}
-            />
-            <DetailItem
-              label="Available Seats"
-              value={`${flight.availableSeats} seats`}
-            />
-            <DetailItem
-              label="Booked Seats"
-              value={`${flight.bookedSeats} seats`}
-            />
-            <DetailItem
-              label="Base Price"
-              value={`${flight.currency} ${flight.basePrice}`}
-            />
-          </div>
-        </section>
+              {/* Inbound Leg */}
+              <div>
+                <h4 className="font-medium text-gray-700 mb-3">Return Flight</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Airline</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.inbound?.airline || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Airline Code</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.inbound?.airline_code || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Flight Number</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.inbound?.flight_number || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Route</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.inbound?.route || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Departure</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.inbound?.departure_time
+                        ? formatDate(snapshot.inbound.departure_time)
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Arrival</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.inbound?.arrival_time
+                        ? formatDate(snapshot.inbound.arrival_time)
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 font-medium">Duration</label>
+                    <p className="text-lg font-medium text-gray-800 mt-1">
+                      {snapshot?.inbound?.duration_minutes
+                        ? formatDuration(snapshot.inbound.duration_minutes)
+                        : "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-        <section className="bg-gray-50 p-6 rounded-lg">
-          <div className="grid grid-cols-2 gap-8 mb-6">
-            <DetailItem label="Gate Number" value={flight.gate} />
-            <DetailItem label="Terminal" value={flight.terminal} />
-          </div>
-          <div>
-            <h3 className="font-medium mb-2">Notes</h3>
-            <p className="text-gray-700">{flight.notes}</p>
-          </div>
-        </section>
+              {/* Shared Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                <div>
+                  <label className="text-xs text-gray-600 font-medium">Type</label>
+                  <p className="text-lg font-medium text-gray-800 mt-1">ROUND TRIP</p>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600 font-medium">Number of Adults</label>
+                  <p className="text-lg font-medium text-gray-800 mt-1">{flight.adults || "N/A"}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // ONE-WAY DISPLAY
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-xs text-gray-600 font-medium">Type</label>
+                <p className="text-lg font-medium text-gray-800 mt-1">ONE-WAY</p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 font-medium">Airline</label>
+                <p className="text-lg font-medium text-gray-800 mt-1">
+                  {snapshot?.airline || "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 font-medium">Airline Code</label>
+                <p className="text-lg font-medium text-gray-800 mt-1">
+                  {snapshot?.airline_code || "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 font-medium">Flight Number</label>
+                <p className="text-lg font-medium text-gray-800 mt-1">
+                  {snapshot?.flight_number || "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 font-medium">Route</label>
+                <p className="text-lg font-medium text-gray-800 mt-1">
+                  {snapshot?.route || "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 font-medium">Departure</label>
+                <p className="text-lg font-medium text-gray-800 mt-1">
+                  {snapshot?.departure_time ? formatDate(snapshot.departure_time) : "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 font-medium">Arrival</label>
+                <p className="text-lg font-medium text-gray-800 mt-1">
+                  {snapshot?.arrival_time ? formatDate(snapshot.arrival_time) : "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 font-medium">Duration</label>
+                <p className="text-lg font-medium text-gray-800 mt-1">
+                  {snapshot?.duration_minutes ? formatDuration(snapshot.duration_minutes) : "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 font-medium">Number of Adults</label>
+                <p className="text-lg font-medium text-gray-800 mt-1">{flight.adults || "N/A"}</p>
+              </div>
+            </div>
+          )}
+        </div>
 
-        <section className="text-sm text-gray-600">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Pricing Information */}
+        <div className="border rounded-md p-5">
+          <h3 className="text-sm font-semibold mb-4">Pricing Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <strong>Created Date:</strong>
-              <br />
-              {flight.createdDate}
+              <label className="text-xs text-gray-600 font-medium">Base Price (USD)</label>
+              <p className="text-lg font-medium text-gray-800 mt-1">
+                ${snapshot?.base_price_usd?.toFixed(2) || "N/A"}
+              </p>
             </div>
             <div>
-              <strong>Modified Date:</strong>
-              <br />
-              {flight.lastModified}
+              <label className="text-xs text-gray-600 font-medium">Final Price (USD)</label>
+              <p className="text-lg font-medium text-gray-800 mt-1">
+                ${flight.final_price_usd?.toFixed(2) || "N/A"}
+              </p>
             </div>
             <div>
-              <strong>Modified By:</strong>
-              <br />
-              {flight.modifiedBy}
+              <label className="text-xs text-gray-600 font-medium">Final Price (MMK)</label>
+              <p className="text-lg font-medium text-gray-800 mt-1">
+                MMK {flight.final_price_mmk?.toLocaleString() || "N/A"}
+              </p>
             </div>
           </div>
-        </section>
+        </div>
       </div>
 
       {/* Buttons */}
-      <div className="p-6 border-t bg-gray-50 flex justify-end gap-4">
+      <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
         <button
           onClick={() => navigate("/admin/flights")}
-          className="px-6 py-2 border rounded hover:bg-gray-50"
+          className="px-4 py-2 border rounded text-sm hover:bg-gray-100"
         >
-          Back to List
-        </button>
-        <button
-          onClick={() => navigate(`/admin/flights/${flightId}/flight-edit`)}
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Edit Flight
+          Back to Flights
         </button>
       </div>
     </div>

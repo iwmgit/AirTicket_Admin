@@ -295,14 +295,13 @@ export default function BookingManagement() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="p-4 text-left w-10"></th>
-              <th className="p-4 text-left">Booking ID</th>
+              <th className="p-4 text-left">Booking Code</th>
               <th className="p-4 text-left">Customer</th>
               <th className="p-4 text-left">Email</th>
               <th className="p-4 text-left">Route</th>
               <th className="p-4 text-left">Travel Date</th>
               <th className="p-4 text-left">Amount</th>
-              <th className="p-4 text-left">Status</th>
+              <th className="p-4 text-left">Booking Status</th>
               <th className="p-4 text-left">Payment Status</th>
               <th className="p-4 text-left">Actions</th>
             </tr>
@@ -313,28 +312,22 @@ export default function BookingManagement() {
               const paymentStatus = (booking.payment_status || "").toUpperCase();
               const bookingStatus = (booking.status || "").toUpperCase();
               const hasTicketUrl = Boolean(
-              booking.ticket_file_url || booking.ticket_url || booking.ticketUrl
+                booking.ticket_file_url || booking.ticket_url || booking.ticketUrl
               );
 
               const showTicketUpload =
-              paymentStatus === "PAID" &&
-              bookingStatus === "PROCESSING" &&
-              !hasTicketUrl;
-
+                paymentStatus === "PAID" &&
+                bookingStatus === "PROCESSING" &&
+                !hasTicketUrl;
 
               return (
                 <tr key={booking.booking_id} className="hover:bg-gray-50 align-top">
-                  <td className="p-4">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="p-4 font-medium">{booking.booking_code}</td>
-                  <td className="p-4 text-gray-600">{booking.user.name}</td>
-                  <td className="p-4">{booking.user.email}</td>
+                  <td className="p-4 font-semibold text-blue-600">{booking.booking_code}</td>
+                  <td className="p-4 text-gray-700">{booking.user.name}</td>
+                  <td className="p-4 text-gray-600">{booking.user.email}</td>
                   <td className="p-4">{extractRoute(booking)}</td>
                   <td className="p-4">{extractTravelDate(booking)}</td>
-                  <td className="p-4 font-medium">
-                     {booking.final_price_usd?.toFixed(2) || "-"}$
-                  </td>
+                  <td className="p-4 font-medium">${booking.final_price_usd?.toFixed(2) || "-"}</td>
 
                   <td className="p-4">
                     <select
@@ -370,20 +363,19 @@ export default function BookingManagement() {
                     </select>
 
                     {showTicketUpload && (
-                      <div className="mt-2 flex gap-2">
+                      <div className="mt-2 flex gap-1">
                         <input
                           type="file"
                           accept=".pdf,.doc,.docx,.zip"
                           onChange={(e) =>
                             handleTicketInputChange(booking.booking_id, e.target.files?.[0])
                           }
-                          placeholder="Select ticket file"
-                          className="border rounded px-2 py-1 text-xs w-56"
+                          className="border rounded px-2 py-1 text-xs flex-1 min-w-0"
                         />
                         <button
                           disabled={isUpdating || !ticketFiles[booking.booking_id]}
                           onClick={() => handleUploadTicket(booking)}
-                          className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+                          className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap"
                         >
                           Upload
                         </button>
@@ -391,19 +383,20 @@ export default function BookingManagement() {
                     )}
 
                     {booking.ticket_file_url && (
-                      <div className="mt-2 flex items-center gap-2">
+                      <div className="mt-2 flex flex-col gap-1">
                         <a
                           href={booking.ticket_file_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-xs text-blue-600 hover:underline"
+                          className="text-xs text-blue-600 hover:underline truncate"
+                          title={booking.original_ticket_name || "Ticket"}
                         >
-                           {booking.original_ticket_name || "View Ticket"}
+                          {booking.original_ticket_name || "View Ticket"}
                         </a>
                         <button
                           disabled={isUpdating}
                           onClick={() => handleDownloadTicket(booking)}
-                          className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
+                          className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 w-fit"
                         >
                           Download
                         </button>
@@ -412,10 +405,10 @@ export default function BookingManagement() {
                   </td>
 
                   <td className="p-4">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => navigate(`/admin/bookings/${booking.booking_id}`)}
-                        className="border px-3 py-1 text-xs rounded hover:bg-gray-100"
+                        className="border px-3 py-1.5 text-xs rounded hover:bg-blue-50 transition-colors"
                       >
                         View
                       </button>
@@ -423,14 +416,14 @@ export default function BookingManagement() {
                         onClick={() =>
                           navigate(`/admin/bookings/${booking.booking_id}/booking-edit`)
                         }
-                        className="border px-3 py-1 text-xs rounded hover:bg-gray-100"
+                        className="border px-3 py-1.5 text-xs rounded hover:bg-gray-100 transition-colors"
                       >
                         Edit
                       </button>
                       <button
                         disabled={isUpdating}
                         onClick={() => handleDeleteBooking(booking.booking_id)}
-                        className="border px-3 py-1 text-xs rounded hover:bg-red-100 text-red-600 disabled:opacity-60"
+                        className="border border-red-300 px-3 py-1.5 text-xs rounded text-red-600 hover:bg-red-50 disabled:opacity-60 transition-colors"
                       >
                         Delete
                       </button>

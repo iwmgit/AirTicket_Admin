@@ -5,6 +5,7 @@ import {
   replaceBookingTicketFile,
   deleteBookingTicketFile,
   uploadBookingTicket,
+  getTicketStatus,
 } from "../../config/api";
 
 export default function BookingEdit() {
@@ -16,6 +17,7 @@ export default function BookingEdit() {
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [ticketStatus, setTicketStatus] = useState(null);
 
   const adminEmail = "admin@example.com";
 
@@ -28,6 +30,17 @@ export default function BookingEdit() {
         if (mounted) {
           setBooking(data);
           setLoading(false);
+          
+          // Fetch ticket status
+          try {
+            const status = await getTicketStatus(bookingId);
+            if (mounted) {
+              setTicketStatus(status);
+            }
+          } catch (err) {
+            // Ticket status fetch failed, but don't block booking view
+            console.log("Could not fetch ticket status:", err.message);
+          }
         }
       } catch (err) {
         if (mounted) {
@@ -65,9 +78,13 @@ export default function BookingEdit() {
       setError(null);
       await replaceBookingTicketFile(bookingId, ticketFile, adminEmail);
 
-      // Refresh booking data to get updated ticket info
+      // Refresh booking data and ticket status to get updated info
       const updatedBooking = await getBookingById(bookingId);
       setBooking(updatedBooking);
+      
+      const status = await getTicketStatus(bookingId);
+      setTicketStatus(status);
+      
       setTicketFile(null);
       setSuccessMessage("Ticket file replaced successfully");
 
@@ -91,9 +108,13 @@ export default function BookingEdit() {
       setError(null);
       await uploadBookingTicket(bookingId, uploadFile, adminEmail, "CONFIRMED");
 
-      // Refresh booking data to get updated ticket info
+      // Refresh booking data and ticket status to get updated info
       const updatedBooking = await getBookingById(bookingId);
       setBooking(updatedBooking);
+      
+      const status = await getTicketStatus(bookingId);
+      setTicketStatus(status);
+      
       setUploadFile(null);
       setSuccessMessage("Ticket file uploaded successfully");
 
@@ -117,9 +138,13 @@ export default function BookingEdit() {
       setError(null);
       await deleteBookingTicketFile(bookingId, adminEmail);
 
-      // Refresh booking data to reflect deletion
+      // Refresh booking data and ticket status to reflect deletion
       const updatedBooking = await getBookingById(bookingId);
       setBooking(updatedBooking);
+      
+      const status = await getTicketStatus(bookingId);
+      setTicketStatus(status);
+      
       setSuccessMessage("Ticket file deleted successfully");
 
       // Clear success message after 3 seconds
@@ -177,7 +202,7 @@ export default function BookingEdit() {
     return <div className="p-6 text-center">Booking not found</div>;
   }
 
-  const hasTicketUrl = Boolean(
+  const hasTicketUrl = ticketStatus?.has_ticket || Boolean(
     booking.ticket_file_url || booking.ticket_url || booking.ticketUrl
   );
 
@@ -245,35 +270,35 @@ export default function BookingEdit() {
         {/* Current Ticket File Info */}
         <div className="mb-6">
           <p className="text-gray-600 text-sm mb-2">Current Ticket File</p>
-          {hasTicketUrl ? (
-            <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded">
-              <span className="text-lg">📄</span>
-              <div className="flex-1">
-                <p className="font-medium text-sm">
-                  {booking.original_ticket_name || "Ticket File"}
-                </p>
-                {booking.ticket_file_url && (
-                  <a
-                    href={booking.ticket_file_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    View File
-                  </a>
-                )}
+          {ticketStatus ? (
+            ticketStatus.has_ticket ? (
+              <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded">
+                <span className="px-2.5 py-0.5 bg-green-100 text-green-800 rounded text-xs font-medium">
+                   Uploaded
+                </span>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600">
+                    {new Date(ticketStatus.ticket_uploaded_at).toLocaleString()}
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <span className="px-2.5 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">
+                   Not Uploaded
+                </span>
+              </div>
+            )
           ) : (
             <div className="p-3 bg-gray-50 border border-gray-200 rounded">
-              <p className="text-sm text-gray-600">No ticket file uploaded</p>
+              <p className="text-sm text-gray-600 animate-pulse">Loading...</p>
             </div>
           )}
         </div>
 
         {/* Upload New Ticket Section */}
         {!hasTicketUrl && (
-          <div className="mt-4 space-y-3 p-4 bg-green-50 rounded border border-green-200">
+          <div className="mt-4 space-y-3 p-4 bg-gray-50 rounded border border-gray-200">
             <h3 className="font-medium text-sm">Upload Ticket File</h3>
             <p className="text-xs text-gray-600">
               Upload a new ticket file for this booking
@@ -338,11 +363,11 @@ export default function BookingEdit() {
 
         {/* Delete Ticket File Section */}
 
-          <div className="mt-4 p-4 bg-red-50 rounded border border-red-200">
-            <h3 className="font-medium text-sm text-red-900 mb-2">
+          <div className="mt-4 p-4 bg-gray-50 rounded border border-red-200">
+            <h3 className="font-medium text-sm text-gray-900 mb-2">
               Delete Ticket File
             </h3>
-            <p className="text-xs text-red-700 mb-3">
+            <p className="text-xs text-gray-700 mb-3">
               This action will permanently delete the ticket file. This cannot be undone.
             </p>
             <button

@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {  getAllStaff, deleteStaffById, activateStaff, deactivateStaff } from "../../config/api";
+import {  getAllStaff, activateStaff, deactivateStaff } from "../../config/api";
 
 export default function StaffManagement() {
   const navigate = useNavigate();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [actionInProgress, setActionInProgress] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -32,42 +31,18 @@ export default function StaffManagement() {
     };
   }, []);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to remove this staff member?"))
-      return;
-
-    setActionInProgress(id);
+  const handleToggleStatus = async (memberId, isActive) => {
     try {
-      await deleteStaffById(id);
-      setStaff((prev) => prev.filter((s) => s.id !== id));
-      alert("Staff member removed successfully");
-    } catch (err) {
-      alert("Failed to remove staff: " + err.message);
-    } finally {
-      setActionInProgress(null);
-    }
-  };
-
-  const handleToggleStatus = async (member) => {
-    setActionInProgress(member.id);
-    try {
-      const isActive = member.status === "Active";
-      const response = isActive 
-        ? await deactivateStaff(member.id) 
-        : await activateStaff(member.id);
-      
-      setStaff((prev) =>
-        prev.map((s) =>
-          s.id === member.id 
-            ? { ...s, status: response.status || (isActive ? "Inactive" : "Active") }
-            : s
-        )
-      );
-      alert(`Staff member ${isActive ? "deactivated" : "activated"} successfully`);
+      if (isActive) {
+        await deactivateStaff(memberId);
+      } else {
+        await activateStaff(memberId);
+      }
+      // Refresh the list
+      const data = await getAllStaff();
+      setStaff(data);
     } catch (err) {
       alert("Failed to update status: " + err.message);
-    } finally {
-      setActionInProgress(null);
     }
   };
 
@@ -135,13 +110,10 @@ export default function StaffManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="p-4 text-left w-10">
-                  <input type="checkbox" />
                 </th>
                 <th className="p-4 text-left">Name</th>
                 <th className="p-4 text-left">Email</th>
                 <th className="p-4 text-left">Role</th>
-                <th className="p-4 text-left">Registration</th>
-                <th className="p-4 text-left">Last Active</th>
                 <th className="p-4 text-left">Status</th>
                 <th className="p-4 text-left">Actions</th>
               </tr>
@@ -150,7 +122,6 @@ export default function StaffManagement() {
               {staff.map((member) => (
                 <tr key={member.id} className="hover:bg-gray-50">
                   <td className="p-4">
-                    <input type="checkbox" />
                   </td>
                   <td className="p-4 font-medium">{member.name}</td>
                   <td className="p-4 text-gray-600">{member.email}</td>
@@ -159,46 +130,41 @@ export default function StaffManagement() {
                       {member.role}
                     </span>
                   </td>
-                  <td className="p-4 text-gray-600">{member.registration}</td>
-                  <td className="p-4 text-gray-600">{member.lastActive}</td>
                   <td className="p-4">
-                    <button
-                      onClick={() => handleToggleStatus(member)}
-                      disabled={actionInProgress === member.id}
-                      className={`px-2.5 py-1 text-xs font-medium rounded-full cursor-pointer disabled:opacity-50 ${
-                        member.status === "Active"
-                          ? "bg-green-100 text-green-700 hover:bg-green-200"
-                          : "bg-red-100 text-red-700 hover:bg-red-200"
+                    <span
+                      className={`border rounded px-2 py-0.5 text-xs font-medium ${
+                        member.is_active
+                          ? "bg-green-100 text-green-800 border-green-200"
+                          : "bg-red-100 text-red-800 border-red-200"
                       }`}
                     >
-                      {member.status}
-                    </button>
+                      {member.is_active ? "Active" : "Inactive"}
+                    </span>
                   </td>
-                  <td className="p-4">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => navigate(`/admin/staff/${member.id}`)}
-                        disabled={actionInProgress === member.id}
-                        className="border border-gray-300 hover:bg-gray-100 px-3 py-1 text-xs rounded disabled:opacity-50"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => navigate(`/admin/staff/${member.id}/edit`)}
-                        disabled={actionInProgress === member.id}
-                        className="border border-gray-300 hover:bg-gray-100 px-3 py-1 text-xs rounded disabled:opacity-50"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(member.id)}
-                        disabled={actionInProgress === member.id}
-                        className="border border-gray-300 hover:bg-gray-100 p-2 rounded disabled:opacity-50"
-                        title="Delete"
-                      >
-                        🗑️
-                      </button>
-                    </div>
+                  <td className="p-4 flex gap-2">
+                    <button
+                      onClick={() => navigate(`/admin/staff/${member.id}`)}
+                      className="border px-2 py-1 rounded text-xs hover:bg-gray-100"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => navigate(`/admin/staff/${member.id}/edit`)}
+                      className="border px-2 py-1 rounded text-xs hover:bg-gray-100"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleToggleStatus(member.id, member.is_active)}
+                      className={`border px-2 py-1 rounded text-xs ${
+                        member.is_active
+                          ? "text-red-500 hover:bg-red-50"
+                          : "text-green-600 hover:bg-green-50"
+                      }`}
+                      title={member.is_active ? "Deactivate" : "Activate"}
+                    >
+                      {member.is_active ? "Deactivate" : "Activate"}
+                    </button>
                   </td>
                 </tr>
               ))}

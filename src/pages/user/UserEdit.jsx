@@ -67,7 +67,9 @@ export default function UserEdit() {
     setError(null);
 
     try {
-      if (user.is_active) {
+      const isCurrentlyActive = user.is_active;
+      
+      if (isCurrentlyActive) {
         await deactivateCustomer(id);
       } else {
         await activateCustomer(id);
@@ -76,7 +78,7 @@ export default function UserEdit() {
       const data = await getCustomerById(id);
       setUser(data);
       alert(
-        user.is_active
+        isCurrentlyActive
           ? "Customer deactivated successfully"
           : "Customer activated successfully"
       );
