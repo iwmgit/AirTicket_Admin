@@ -1,10 +1,11 @@
 import { NavLink } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router";
+import Logo from "../assets/Logo.png";
 
 const navItemClass = ({ isActive }) =>
   `block px-4 py-3 rounded text-sm font-medium ${
-    isActive ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-200"
+    isActive ? "bg-[#bedbff] text-black" : "text-gray-700 hover:bg-[#f5f8ff] hover:text-black transition"
   }`;
 
 export default function AdminSidebar() {
@@ -17,9 +18,13 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside className="w-64 bg-gray-200 border-r border-gray-300 p-4">
+    <aside className="w-64 bg-[#f5f8ff] border-r border-gray-300 p-4">
       {/* Logo */}
-      <div className="text-xl font-bold mb-8">Admin Panel</div>
+      <div className="flex items-center gap-4 mb-8">
+        <img src={Logo} alt="Logo" className="w-14 h-14 object-contain" />
+        <div className="text-xl font-bold text-center">Admin Panel</div>
+      </div>
+            
 
       {/* Navigation */}
       <nav className="space-y-2">

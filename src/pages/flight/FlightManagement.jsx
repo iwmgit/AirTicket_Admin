@@ -1,4 +1,4 @@
- import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -162,9 +162,10 @@ export default function FlightManagement() {
     return `${hours}h ${mins}m`;
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString();
+  const formatDisplayDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString + "T00:00:00");
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
   // Handlers
@@ -296,323 +297,409 @@ export default function FlightManagement() {
     }
   }; 
 
+  const CalendarIcon = (
+  <svg
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+  >
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+  );
+
   // Render
   return (
-    <div className="space-y-6">
-      {/* =========================
-          Header
-      ========================= */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">Search and manage flights</p>
-        </div>
-
-        <div className="flex gap-3">
-          {isAdmin && (
-            <>
-              <button
-                onClick={() => navigate("/admin/overrides")}
-                className="border px-4 py-2 text-sm rounded hover:bg-gray-50 font-medium"
-              >
-                View Overrides
-              </button>
-
-              <button
-                onClick={() => setOpenCurrencyModal(true)}
-                className="border px-4 py-2 text-sm rounded hover:bg-gray-50"
-              >
-                Currency Exchange
-              </button>
-              <button
-                onClick={() => setOpenPricingModal(true)}
-                className="border px-4 py-2 text-sm rounded hover:bg-gray-50"
-              >
-                Pricing Configuration
-              </button>
-            </>
-          )}
-          </div>
-      </div>
-
-      {/* =========================
-          Search Form
-      ========================= */}
-      <div className="bg-white border rounded-lg p-4">
-        {/* Trip Type Toggle */}
-        <div className="mb-4 flex gap-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="tripType"
-              value="oneWay"
-              checked={tripType === "oneWay"}
-              onChange={(e) => handleTripTypeChange(e.target.value)}
-              className="cursor-pointer"
-            />
-            <span className="text-sm">One-way</span>
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="tripType"
-              value="roundTrip"
-              checked={tripType === "roundTrip"}
-              onChange={(e) => handleTripTypeChange(e.target.value)}
-              className="cursor-pointer"
-            />
-            <span className="text-sm">Round-trip</span>
-          </label>
-        </div>
-
-        {/* Search Error */}
-        {searchError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded text-sm">
-            {searchError}
-          </div>
-        )}
-
-        {/* Search Inputs */}
-        <div className="grid grid-cols-5 gap-4 items-end">
-          {/* Origin */}
-          <div>
-            <label className="text-xs text-gray-500">Origin</label>
-            <input
-              type="text"
-              className="border rounded px-3 py-2 text-sm w-full"
-              placeholder="e.g., RGN, BKK"
-              value={searchParams.origin}
-              onChange={(e) => handleInputChange("origin", e.target.value)}
-            />
-          </div>
-
-          {/* Destination */}
-          <div>
-            <label className="text-xs text-gray-500">Destination</label>
-            <input
-              type="text"
-              className="border rounded px-3 py-2 text-sm w-full"
-              placeholder="e.g., BKK, SIN"
-              value={searchParams.destination}
-              onChange={(e) =>
-                handleInputChange("destination", e.target.value)
-              }
-            />
-          </div>
-
-          {/* Departure Date */}
-          <div>
-            <label className="text-sm text-gray-500">Departure Date</label>
-            <input
-              type="date"
-              className="border rounded px-3 py-2 text-sm w-full"
-              value={searchParams.departureDate}
-              onChange={(e) =>
-                handleInputChange("departureDate", e.target.value)
-              }
-            />
-          </div>
-
-          {/* Return Date */}
-          {tripType === "roundTrip" && (
+    <div className="p-4">
+      <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
+        {/* Header */}
+        <div className="p-5 border-b border-blue-200">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <label className="text-sm text-gray-500">Return Date</label>
+              <h2 className="text-lg font-semibold text-gray-800">Flight Management</h2>
+              <p className="text-sm text-gray-500">Search and manage flights</p>
+            </div>
+
+            <div className="flex gap-3">
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={() => navigate("/admin/overrides")}
+                    className="border border-blue-200 px-4 py-2 text-sm rounded-lg bg-[#bedbff] hover:bg-blue-50 font-medium transition"
+                  >
+                    View Overrides
+                  </button>
+
+                  <button
+                    onClick={() => setOpenCurrencyModal(true)}
+                    className="border border-blue-200 px-4 py-2 text-sm rounded-lg bg-[#bedbff] hover:bg-blue-50 font-medium transition"
+                  >
+                    Currency Exchange
+                  </button>
+                  <button
+                    onClick={() => setOpenPricingModal(true)}
+                    className="border border-blue-200 px-4 py-2 text-sm rounded-lg bg-[#bedbff] hover:bg-blue-50 font-medium transition"
+                  >
+                    Pricing Configuration
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Search Form */}
+        <div className="p-5 border-b border-blue-200">
+          {/* Trip Type Toggle */}
+          <div className="mb-4 flex gap-4">
+            <label className="flex items-center gap-2">
               <input
-                type="date"
-                className="border rounded px-3 py-2 text-sm w-full"
-                value={searchParams.returnDate}
-                onChange={(e) =>
-                  handleInputChange("returnDate", e.target.value)
-                }
+                type="radio"
+                name="tripType"
+                value="oneWay"
+                checked={tripType === "oneWay"}
+                onChange={(e) => handleTripTypeChange(e.target.value)}
+                className="cursor-pointer"
+              />
+              <span className="text-sm font-medium">One-way</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="tripType"
+                value="roundTrip"
+                checked={tripType === "roundTrip"}
+                onChange={(e) => handleTripTypeChange(e.target.value)}
+                className="cursor-pointer"
+              />
+              <span className="text-sm font-medium">Round-trip</span>
+            </label>
+          </div>
+
+          {/* Search Error */}
+          {searchError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+              {searchError}
+            </div>
+          )}
+
+          {/* Search Inputs */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+            {/* Origin */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Origin</label>
+              <input
+                type="text"
+                className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="e.g., RGN, BKK"
+                value={searchParams.origin}
+                onChange={(e) => handleInputChange("origin", e.target.value)}
               />
             </div>
-          )}
 
-          {/* Actions */}
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={handleClearAll}
-              className="border px-4 py-2 rounded text-sm hover:bg-gray-50"
-            >
-              Clear All
-            </button>
+            {/* Destination */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Destination</label>
+              <input
+                type="text"
+                className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="e.g., BKK, SIN"
+                value={searchParams.destination}
+                onChange={(e) => handleInputChange("destination", e.target.value)}
+              />
+            </div>
 
-            <button
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="bg-gray-800 hover:bg-black text-white text-sm px-4 py-2 rounded disabled:bg-gray-400"
-            >
-              {isSearching ? "Searching..." : "Search Flights"}
-            </button>
+            {/* Departure Date */}
+            <div >
+              <label className="block text-sm font-medium text-slate-500 mb-3">
+                Departure date
+              </label>
+              <div className="relative">
+                <div className="h-10 rounded-2xl border border-gray-200 bg-white flex items-center px-4">
+                  <span className="mr-3 text-gray-400">{CalendarIcon}</span>
+                  <input
+                    type="text"
+                    readOnly
+                    value={formatDisplayDate(searchParams.departureDate)}
+                    placeholder="Select date"
+                    onClick={() => {
+                      const el = document.getElementById("departure-date");
+                      if (el?.showPicker) {
+                        el.showPicker();
+                      } else if (el) {
+                        el.click();
+                      }
+                    }}
+                    className="w-full bg-transparent outline-none text-base text-slate-700 placeholder:text-gray-400 cursor-pointer"
+                  />
+                </div>
+
+                <input
+                  id="departure-date"
+                  type="date"
+                  value={searchParams.departureDate}
+                  onChange={(e) =>
+                    handleInputChange("departureDate", e.target.value)
+                  }
+                  className="absolute inset-0 opacity-0 pointer-events-none"
+                  tabIndex={-1}
+                />
+              </div>
+            </div>
+
+            {/* Return Date */}
+            {tripType === "roundTrip" && (
+              <div>
+                <label className="block text-sm font-medium text-slate-500 mb-3">
+                  Return date
+                </label>
+                <div className="relative">
+                  <div className="h-10 rounded-2xl border border-gray-200 bg-white flex items-center px-4">
+                    <span className="mr-3 text-gray-400">{CalendarIcon}</span>
+                    <input
+                      type="text"
+                      readOnly
+                      value={formatDisplayDate(searchParams.returnDate)}
+                      placeholder="Select date "
+                      onClick={() => {
+                        const el = document.getElementById("return-date");
+                        if (el?.showPicker) {
+                          el.showPicker();
+                        } else if (el) {
+                          el.click();
+                        }
+                      }}
+                      className="w-full bg-transparent outline-none text-base text-slate-700 placeholder:text-gray-400 cursor-pointer"
+                    />
+                  </div>
+
+                  <input
+                    id="return-date"
+                    type="date"
+                    value={searchParams.returnDate}
+                    onChange={(e) =>
+                      handleInputChange("returnDate", e.target.value)
+                    }
+                    className="absolute inset-0 opacity-0 pointer-events-none"
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={handleClearAll}
+                className="border border-blue-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition"
+              >
+                Clear All
+              </button>
+
+              <button
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="bg-[#bedbff] hover:bg-blue-700 text-black text-sm px-4 py-2 rounded-lg font-medium disabled:bg-gray-400 transition"
+              >
+                {isSearching ? "Searching..." : "Search Flights"}
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Results Table */}
+        {hasSearched && (
+          <>
+            {/* Results Header */}
+            <div className="px-5 py-3 border-b border-blue-200">
+              <h3 className="font-semibold text-gray-800">Search Results</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {searchResults.length > 0
+                  ? `Showing ${searchResults.length} flight${searchResults.length !== 1 ? "s" : ""}`
+                  : "No flights found matching your search criteria"}
+              </p>
+            </div>
+
+            {/* Empty State / Table */}
+            {searchResults.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                No flights found. Try adjusting your search criteria.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-blue-50 border-y border-blue-200 text-gray-600 text-xs uppercase tracking-wide">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Type</th>
+                      <th className="px-4 py-3 text-left">Flight No.</th>
+                      <th className="px-4 py-3 text-left">Airline</th>
+                      <th className="px-4 py-3 text-left">Route</th>
+                      <th className="px-4 py-3 text-left">Departure</th>
+                      <th className="px-4 py-3 text-left">Arrival</th>
+                      <th className="px-4 py-3 text-left">Duration</th>
+                      <th className="px-4 py-3 text-left">Adults</th>
+                      <th className="px-4 py-3 text-left">Base Price USD</th>
+                      <th className="px-4 py-3 text-left">Final Price USD</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-gray-100">
+                    {searchResults.map((flight) => (
+                      <tr key={flight.bundle_key} className="hover:bg-gray-50 transition">
+                        <td className="px-4 py-3 text-xs">
+                          <span className="font-medium">{flight.type}</span>
+                        </td>
+
+                        <td className="px-4 py-3 font-medium">
+                          {flight.type === "ROUND_TRIP"
+                            ? `${flight.flight_snapshot.outbound.flight_number} / ${flight.flight_snapshot.inbound.flight_number}`
+                            : flight.flight_snapshot.flight_number}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {flight.type === "ROUND_TRIP"
+                            ? flight.flight_snapshot.outbound.airline
+                            : flight.flight_snapshot.airline}
+
+                          <div className="text-xs text-gray-500">
+                            {flight.type === "ROUND_TRIP"
+                              ? flight.flight_snapshot.outbound.airline_code
+                              : flight.flight_snapshot.airline_code}
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {flight.type === "ROUND_TRIP"
+                            ? `${flight.flight_snapshot.outbound.route} / ${flight.flight_snapshot.inbound.route}`
+                            : flight.flight_snapshot.route}
+                        </td>
+
+                        <td className="px-4 py-3 text-sm">
+                          {flight.type === "ROUND_TRIP"
+                            ? flight.flight_snapshot.outbound.departure_time
+                            : flight.flight_snapshot.departure_time}
+                        </td>
+
+                        <td className="px-4 py-3 text-sm">
+                          {flight.type === "ROUND_TRIP"
+                            ? flight.flight_snapshot.inbound.arrival_time
+                            : flight.flight_snapshot.arrival_time}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {flight.type === "ROUND_TRIP"
+                            ? `${formatDuration(
+                                flight.flight_snapshot.outbound.duration_minutes
+                              )} / ${formatDuration(
+                                flight.flight_snapshot.inbound.duration_minutes
+                              )}`
+                            : formatDuration(flight.flight_snapshot.duration_minutes)}
+                        </td>
+
+                        <td className="px-4 py-3">{flight.adults}</td>
+
+                        <td className="px-4 py-3 font-medium">
+                          ${flight.flight_snapshot.base_price_usd}
+                        </td>
+
+                        <td className="px-4 py-3 font-medium">
+                          ${flight.final_price_usd}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() =>
+                                navigate(`/admin/flights/${flight.bundle_key}`, {
+                                  state: { flightData: flight },
+                                })
+                              }
+                              className="w-8 h-8 flex items-center justify-center border border-blue-200 rounded-lg text-gray-600 hover:bg-blue-50 transition"
+                              title="View"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                              </svg>
+                            </button>
+
+                            {isAdmin && (
+                              <button
+                                onClick={() => {
+                                  navigate(
+                                    `/admin/flights/${flight.bundle_key}/flight-edit`,
+                                    {
+                                      state: {
+                                        flightData: flight,
+                                        mode: "create",
+                                      },
+                                    }
+                                  );
+                                }}
+                                className="w-8 h-8 flex items-center justify-center border border-blue-200 rounded-lg text-gray-600 hover:bg-blue-50 transition"
+                                title="Edit">
+                                  <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  >
+                                  <path
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M11 5h2M12 20h9"
+                                  />
+                                  <path
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M16.862 5.487l1.65 1.65a2.121 2.121 0 010 3l-9.193 9.193-3.536.707.707-3.536 9.193-9.193a2.121 2.121 0 013 0z"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      {/* =========================
-          Results Table
-      ========================= */}
-      {hasSearched && (
-        <div className="bg-white border rounded-lg overflow-hidden">
-          {/* Results Header */}
-          <div className="px-4 py-3 border-b">
-            <h3 className="font-medium">Search Results</h3>
-            <p className="text-xs text-gray-500">
-              {searchResults.length > 0
-                ? `Showing ${searchResults.length} flight${
-                    searchResults.length !== 1 ? "s" : ""
-                  }`
-                : "No flights found matching your search criteria"}
-            </p>
-          </div>
-
-          {/* Empty State / Table */}
-          {searchResults.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              No flights found. Try adjusting your search criteria.
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="p-4 w-10"></th>
-                  <th className="p-4 text-left">Type</th>
-                  <th className="p-4 text-left">Flight No.</th>
-                  <th className="p-4 text-left">Airline</th>
-                  <th className="p-4 text-left">Route</th>
-                  <th className="p-4 text-left">Departure</th>
-                  <th className="p-4 text-left">Arrival</th>
-                  <th className="p-4 text-left">Duration</th>
-                  <th className="p-4 text-left">Adults</th>
-                  <th className="p-4 text-left">Base Price USD</th>
-                  <th className="p-4 text-left">Final Price USD</th>
-                  <th className="p-4 text-left">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y">
-                {searchResults.map((flight) => (
-                  <tr key={flight.bundle_key} className="hover:bg-gray-50">
-                    <td className="p-4">
-                    </td>
-
-                    <td className="p-4 text-xs">
-                      <span className="font-medium">{flight.type}</span>
-                    </td>
-
-                    <td className="p-4 font-medium">
-                      {flight.type === "ROUND_TRIP"
-                        ? `${flight.flight_snapshot.outbound.flight_number} / ${flight.flight_snapshot.inbound.flight_number}`
-                        : flight.flight_snapshot.flight_number}
-                    </td>
-
-                    <td className="p-4">
-                      {flight.type === "ROUND_TRIP"
-                        ? flight.flight_snapshot.outbound.airline
-                        : flight.flight_snapshot.airline}
-
-                      <div className="text-xs text-gray-500">
-                        {flight.type === "ROUND_TRIP"
-                          ? flight.flight_snapshot.outbound.airline_code
-                          : flight.flight_snapshot.airline_code}
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      {flight.type === "ROUND_TRIP"
-                        ? `${flight.flight_snapshot.outbound.route} / ${flight.flight_snapshot.inbound.route}`
-                        : flight.flight_snapshot.route}
-                    </td>
-
-                    <td className="p-4">
-                      {flight.type === "ROUND_TRIP"
-                        ? flight.flight_snapshot.outbound.departure_time
-                        : flight.flight_snapshot.departure_time}
-                    </td>
-
-                    <td className="p-4">
-                      {flight.type === "ROUND_TRIP"
-                        ? flight.flight_snapshot.inbound.arrival_time
-                        : flight.flight_snapshot.arrival_time}
-                    </td>
-
-                    <td className="p-4">
-                      {flight.type === "ROUND_TRIP"
-                        ? `${formatDuration(
-                            flight.flight_snapshot.outbound.duration_minutes
-                          )} / ${formatDuration(
-                            flight.flight_snapshot.inbound.duration_minutes
-                          )}`
-                        : formatDuration(
-                            flight.flight_snapshot.duration_minutes
-                          )}
-                    </td>
-
-                    <td className="p-4">{flight.adults}</td>
-
-                    <td className="p-4 font-medium">
-                      ${flight.flight_snapshot.base_price_usd}
-                    </td>
-
-                    <td className="p-4 font-medium">${flight.final_price_usd}</td>
-
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() =>
-                            navigate(`/admin/flights/${flight.bundle_key}`, {
-                              state: {
-                                flightData: flight,
-                              },
-                            })
-                          }
-                          className="border px-3 py-1 text-xs rounded hover:bg-gray-100"
-                        >
-                          View
-                        </button>
-
-                        {isAdmin && (
-                          <button
-                            onClick={() => {
-                              navigate(
-                                `/admin/flights/${flight.bundle_key}/flight-edit`,
-                                {
-                                  state: {
-                                    flightData: flight,
-                                    mode: "create",
-                                  },
-                                }
-                              );
-                            }}
-                            className="border px-3 py-1 text-xs rounded hover:bg-gray-100"
-                          >
-                            Edit
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {/* Pagination */}
-          <div className="p-4 flex justify-between text-sm text-gray-500 border-t">
-            <span>Showing {searchResults.length} results</span>
-          </div>
-        </div>
-      )}
-
-      {/* =========================
-          Currency Modal
-      ========================= */}
+      {/* ========================= Currency Modal ========================= */}
       {openCurrencyModal && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={() => setOpenCurrencyModal(false)}
         >
           <div
-            className="bg-white w-full max-w-2xl rounded-lg p-6"
+            className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -625,18 +712,18 @@ export default function FlightManagement() {
             <div className="mb-6 overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-gray-100 border">
-                    <th className="border p-3 text-left font-semibold">Currency</th>
-                    <th className="border p-3 text-left font-semibold">Current Rate (to MMK)</th>
-                    <th className="border p-3 text-left font-semibold">New Rate</th>
-                    <th className="border p-3 text-left font-semibold">Last Updated</th>
+                  <tr className="bg-blue-50 border border-blue-200">
+                    <th className="border border-blue-200 p-3 text-left font-semibold">Currency</th>
+                    <th className="border border-blue-200 p-3 text-left font-semibold">Current Rate (to MMK)</th>
+                    <th className="border border-blue-200 p-3 text-left font-semibold">New Rate</th>
+                    <th className="border border-blue-200 p-3 text-left font-semibold">Last Updated</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border hover:bg-gray-50">
-                    <td className="border p-3">USD</td>
-                    <td className="border p-3 font-medium">{currentRate || 0}</td>
-                    <td className="border p-3">
+                  <tr className="border border-blue-200 hover:bg-blue-50">
+                    <td className="border border-blue-200 p-3">USD</td>
+                    <td className="border border-blue-200 p-3 font-medium">{currentRate || 0}</td>
+                    <td className="border border-blue-200 p-3">
                       <input
                         type="text"
                         value={usdToMmkRate}
@@ -646,11 +733,11 @@ export default function FlightManagement() {
                             setUsdToMmkRate(value);
                           }
                         }}
-                        className="border rounded px-3 py-2 w-full"
+                        className="border border-blue-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
                         placeholder="Enter new rate"
                       />
                     </td>
-                    <td className="border p-3 text-sm text-gray-600">
+                    <td className="border border-blue-200 p-3 text-sm text-gray-600">
                       {formatDate(lastUpdated)}
                     </td>
                   </tr>
@@ -662,14 +749,14 @@ export default function FlightManagement() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setOpenCurrencyModal(false)}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
+                className="px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium transition"
               >
                 Cancel
               </button>
 
-              <button 
+              <button
                 onClick={handleUpdateRate}
-                className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
               >
                 Update Rate
               </button>
@@ -678,16 +765,14 @@ export default function FlightManagement() {
         </div>
       )}
 
-      {/* =========================
-          Pricing Configuration Modal
-      ========================= */}
+      {/* ========================= Pricing Configuration Modal ========================= */}
       {openPricingModal && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={() => setOpenPricingModal(false)}
         >
           <div
-            className="bg-white w-full max-w-2xl rounded-lg p-6"
+            className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -700,18 +785,18 @@ export default function FlightManagement() {
             <div className="mb-6 overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-gray-100 border">
-                    <th className="border p-3 text-left font-semibold">Configuration</th>
-                    <th className="border p-3 text-left font-semibold">Current Value</th>
-                    <th className="border p-3 text-left font-semibold">New Value</th>
-                    <th className="border p-3 text-left font-semibold">Last Updated</th>
+                  <tr className="bg-blue-50 border border-blue-200">
+                    <th className="border border-blue-200 p-3 text-left font-semibold">Configuration</th>
+                    <th className="border border-blue-200 p-3 text-left font-semibold">Current Value</th>
+                    <th className="border border-blue-200 p-3 text-left font-semibold">New Value</th>
+                    <th className="border border-blue-200 p-3 text-left font-semibold">Last Updated</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border hover:bg-gray-50">
-                    <td className="border p-3 font-medium">Global Markup Percentage</td>
-                    <td className="border p-3 font-medium">{currentMarkup || 0}%</td>
-                    <td className="border p-3">
+                  <tr className="border border-blue-200 hover:bg-blue-50">
+                    <td className="border border-blue-200 p-3 font-medium">Global Markup Percentage</td>
+                    <td className="border border-blue-200 p-3 font-medium">{currentMarkup || 0}%</td>
+                    <td className="border border-blue-200 p-3">
                       <input
                         type="text"
                         value={globalMarkup}
@@ -721,11 +806,11 @@ export default function FlightManagement() {
                             setGlobalMarkup(value);
                           }
                         }}
-                        className="border rounded px-3 py-2 w-full"
+                        className="border border-blue-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
                         placeholder="Enter markup percentage"
                       />
                     </td>
-                    <td className="border p-3 text-sm text-gray-600">
+                    <td className="border border-blue-200 p-3 text-sm text-gray-600">
                       {formatDate(pricingUpdatedAt)}
                     </td>
                   </tr>
@@ -733,26 +818,25 @@ export default function FlightManagement() {
               </table>
             </div>
 
-
             {/* Modal Footer */}
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setOpenPricingModal(false)}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
+                className="px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium transition"
               >
                 Cancel
               </button>
 
-              <button 
+              <button
                 onClick={handleUpdatePricingConfig}
-                className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
               >
                 Update Configuration
               </button>
             </div>
           </div>
         </div>
-      )}    
+      )}
     </div>
   );
 }
