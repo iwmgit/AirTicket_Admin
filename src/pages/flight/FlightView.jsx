@@ -8,12 +8,10 @@ export default function FlightView() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get flight data from navigation state
     if (location.state?.flightData) {
       setFlight(location.state.flightData);
       setLoading(false);
     } else {
-      // Fallback: redirect back if no flight data provided
       setLoading(false);
       navigate("/admin/flights");
     }
@@ -41,234 +39,147 @@ export default function FlightView() {
   const isRoundTrip = flight.type === "ROUND_TRIP";
 
   return (
-    <div className="bg-white">
-      {/* Header */}
-      <div className="px-6 py-4 border-b bg-gray-50">
-        <h2 className="text-lg font-semibold">Flight Details</h2>
-        <p className="text-sm text-gray-500 mt-1">View flight information</p>
-      </div>
-
-      <div className="p-6 space-y-6">
-        {/* Flight Details - Read Only */}
-        <div className="border rounded-md p-5 bg-gray-50">
-          <h3 className="text-sm font-semibold mb-4">Flight Details</h3>
-          
-          {isRoundTrip ? (
-            // ROUND TRIP DISPLAY
-            <div className="space-y-6">
-              {/* Outbound Leg */}
-              <div>
-                <h4 className="font-medium text-gray-700 mb-3">Outbound Flight</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Airline</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.outbound?.airline || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Airline Code</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.outbound?.airline_code || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Flight Number</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.outbound?.flight_number || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Route</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.outbound?.route || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Departure</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.outbound?.departure_time
-                        ? formatDate(snapshot.outbound.departure_time)
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Arrival</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.outbound?.arrival_time
-                        ? formatDate(snapshot.outbound.arrival_time)
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Duration</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.outbound?.duration_minutes
-                        ? formatDuration(snapshot.outbound.duration_minutes)
-                        : "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Inbound Leg */}
-              <div>
-                <h4 className="font-medium text-gray-700 mb-3">Return Flight</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Airline</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.inbound?.airline || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Airline Code</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.inbound?.airline_code || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Flight Number</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.inbound?.flight_number || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Route</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.inbound?.route || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Departure</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.inbound?.departure_time
-                        ? formatDate(snapshot.inbound.departure_time)
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Arrival</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.inbound?.arrival_time
-                        ? formatDate(snapshot.inbound.arrival_time)
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 font-medium">Duration</label>
-                    <p className="text-lg font-medium text-gray-800 mt-1">
-                      {snapshot?.inbound?.duration_minutes
-                        ? formatDuration(snapshot.inbound.duration_minutes)
-                        : "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Shared Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                <div>
-                  <label className="text-xs text-gray-600 font-medium">Type</label>
-                  <p className="text-lg font-medium text-gray-800 mt-1">ROUND TRIP</p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-600 font-medium">Number of Adults</label>
-                  <p className="text-lg font-medium text-gray-800 mt-1">{flight.adults || "N/A"}</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // ONE-WAY DISPLAY
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Type</label>
-                <p className="text-lg font-medium text-gray-800 mt-1">ONE-WAY</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Airline</label>
-                <p className="text-lg font-medium text-gray-800 mt-1">
-                  {snapshot?.airline || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Airline Code</label>
-                <p className="text-lg font-medium text-gray-800 mt-1">
-                  {snapshot?.airline_code || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Flight Number</label>
-                <p className="text-lg font-medium text-gray-800 mt-1">
-                  {snapshot?.flight_number || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Route</label>
-                <p className="text-lg font-medium text-gray-800 mt-1">
-                  {snapshot?.route || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Departure</label>
-                <p className="text-lg font-medium text-gray-800 mt-1">
-                  {snapshot?.departure_time ? formatDate(snapshot.departure_time) : "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Arrival</label>
-                <p className="text-lg font-medium text-gray-800 mt-1">
-                  {snapshot?.arrival_time ? formatDate(snapshot.arrival_time) : "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Duration</label>
-                <p className="text-lg font-medium text-gray-800 mt-1">
-                  {snapshot?.duration_minutes ? formatDuration(snapshot.duration_minutes) : "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 font-medium">Number of Adults</label>
-                <p className="text-lg font-medium text-gray-800 mt-1">{flight.adults || "N/A"}</p>
-              </div>
-            </div>
-          )}
+    <div className="p-4 flex justify-center">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-lg overflow-hidden">    
+        {/* ================= Header ================= */}
+        <div className="p-6 border-b">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Flight Details 
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Complete flight information and schedule
+          </p>
         </div>
 
-        {/* Pricing Information */}
-        <div className="border rounded-md p-5">
-          <h3 className="text-sm font-semibold mb-4">Pricing Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* ================= Body ================= */}
+        <div className="p-6">
+          {/* Airline + Status */}
+          <div className="flex items-start justify-between mb-8">
             <div>
-              <label className="text-xs text-gray-600 font-medium">Base Price (USD)</label>
-              <p className="text-lg font-medium text-gray-800 mt-1">
-                ${snapshot?.base_price_usd?.toFixed(2) || "N/A"}
-              </p>
-            </div>
-            <div>
-              <label className="text-xs text-gray-600 font-medium">Final Price (USD)</label>
-              <p className="text-lg font-medium text-gray-800 mt-1">
-                ${flight.final_price_usd?.toFixed(2) || "N/A"}
-              </p>
-            </div>
-            <div>
-              <label className="text-xs text-gray-600 font-medium">Final Price (MMK)</label>
-              <p className="text-lg font-medium text-gray-800 mt-1">
-                MMK {flight.final_price_mmk?.toLocaleString() || "N/A"}
+              <h1 className="text-3xl font-bold text-gray-900">
+                {snapshot?.airline || "N/A"}
+              </h1>
+              <p className="text-gray-500 mt-2">
+                Flight {snapshot?.flight_number || "N/A"} •{" "}
+                {snapshot?.route || "N/A"}
               </p>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Buttons */}
-      <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
-        <button
-          onClick={() => navigate("/admin/flights")}
-          className="px-4 py-2 border rounded text-sm hover:bg-gray-100"
-        >
-          Back to Flights
-        </button>
+          {/* ================= Route Section ================= */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+              Route & Schedule
+            </h3>
+
+            <div className="border rounded-2xl shadow-sm p-8">
+              <div className="flex items-center justify-between">
+                
+                {/* ===== Departure ===== */}
+                <div>
+                  <p className="text-sm text-gray-500 mb-2">Departure</p>
+                  <h2 className="text-4xl font-bold text-blue-500">
+                    {snapshot?.origin || "N/A"}
+                  </h2>
+                  <p className="text-gray-700 mt-2">
+                    {snapshot?.departure_time
+                      ? formatDate(snapshot.departure_time)
+                      : "N/A"}
+                  </p>
+                </div>
+
+                {/* ===== Middle Line ===== */}
+                <div className="flex-1 px-10 text-center">
+                  <div className="flex items-center justify-center gap-3 text-gray-400">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+
+                    <div className="h-[2px] bg-gray-300 flex-1 relative">
+                      <span className="absolute left-1/2 -translate-x-1/2 -top-3 text-xl">
+                        ✈
+                      </span>
+                    </div>
+
+                    <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                  </div>
+
+                  <p className="text-sm text-gray-500 mt-3">
+                    {snapshot?.duration_minutes
+                      ? formatDuration(snapshot.duration_minutes)
+                      : "N/A"}
+                  </p>
+                </div>
+
+                {/* ===== Arrival ===== */}
+                <div className="text-right">
+                  <p className="text-sm text-gray-500 mb-2">Arrival</p>
+                  <h2 className="text-4xl font-bold text-blue-500">
+                    {snapshot?.destination || "N/A"}
+                  </h2>
+                  <p className="text-gray-700 mt-2">
+                    {snapshot?.arrival_time
+                      ? formatDate(snapshot.arrival_time)
+                      : "N/A"}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {/* ================= Pricing ================= */}
+          <div className="mt-6 border rounded-lg p-5">
+            <h3 className="text-sm font-semibold text-gray-800 mb-4">
+              Pricing Information
+            </h3>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs text-gray-500">
+                  Base Price (USD)
+                </label>
+                <p className="text-sm font-medium mt-1">
+                  ${snapshot?.base_price_usd?.toFixed(2) || "N/A"}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500">
+                  Final Price (USD)
+                </label>
+                <p className="text-sm font-medium mt-1">
+                  ${flight.final_price_usd?.toFixed(2) || "N/A"}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500">
+                  Final Price (MMK)
+                </label>
+                <p className="text-sm font-medium mt-1">
+                  MMK {flight.final_price_mmk?.toLocaleString() || "N/A"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= Footer ================= */}
+        <div className="p-5 border-t bg-gray-50 flex justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100"
+          >
+            Close
+          </button>
+
+          <button
+            onClick={() => navigate("/admin/flights")}
+            className="px-4 py-2 bg-black text-white rounded-lg"
+          >
+            Back to Flights
+          </button>
+        </div>
+
       </div>
     </div>
   );

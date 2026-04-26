@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   getBookingById,
   replaceBookingTicketFile,
@@ -10,6 +10,7 @@ import {
 
 export default function BookingEdit() {
   const { bookingId } = useParams();
+  const navigate = useNavigate();
   const [booking, setBooking] = useState(null);
   const [ticketFile, setTicketFile] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
@@ -31,14 +32,12 @@ export default function BookingEdit() {
           setBooking(data);
           setLoading(false);
           
-          // Fetch ticket status
           try {
             const status = await getTicketStatus(bookingId);
             if (mounted) {
               setTicketStatus(status);
             }
           } catch (err) {
-            // Ticket status fetch failed, but don't block booking view
             console.log("Could not fetch ticket status:", err.message);
           }
         }
@@ -78,7 +77,6 @@ export default function BookingEdit() {
       setError(null);
       await replaceBookingTicketFile(bookingId, ticketFile, adminEmail);
 
-      // Refresh booking data and ticket status to get updated info
       const updatedBooking = await getBookingById(bookingId);
       setBooking(updatedBooking);
       
@@ -88,7 +86,6 @@ export default function BookingEdit() {
       setTicketFile(null);
       setSuccessMessage("Ticket file replaced successfully");
 
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError("Failed to replace ticket file: " + (err.message || "Unknown error"));
@@ -108,7 +105,6 @@ export default function BookingEdit() {
       setError(null);
       await uploadBookingTicket(bookingId, uploadFile, adminEmail, "CONFIRMED");
 
-      // Refresh booking data and ticket status to get updated info
       const updatedBooking = await getBookingById(bookingId);
       setBooking(updatedBooking);
       
@@ -118,7 +114,6 @@ export default function BookingEdit() {
       setUploadFile(null);
       setSuccessMessage("Ticket file uploaded successfully");
 
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError("Failed to upload ticket file: " + (err.message || "Unknown error"));
@@ -138,7 +133,6 @@ export default function BookingEdit() {
       setError(null);
       await deleteBookingTicketFile(bookingId, adminEmail);
 
-      // Refresh booking data and ticket status to reflect deletion
       const updatedBooking = await getBookingById(bookingId);
       setBooking(updatedBooking);
       
@@ -147,7 +141,6 @@ export default function BookingEdit() {
       
       setSuccessMessage("Ticket file deleted successfully");
 
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError("Failed to delete ticket file: " + (err.message || "Unknown error"));
@@ -157,8 +150,7 @@ export default function BookingEdit() {
   };
 
   const getStatusStyle = (status) => {
-    const base =
-      "inline-block px-2.5 py-1 text-xs font-medium rounded-full border bg-white";
+    const base = "inline-block px-2.5 py-1 text-xs font-medium rounded-full border";
 
     switch ((status || "").toUpperCase()) {
       case "PROCESSING":
@@ -175,8 +167,7 @@ export default function BookingEdit() {
   };
 
   const getPaymentStatusStyle = (status) => {
-    const base =
-      "inline-block px-2.5 py-1 text-xs font-medium rounded-full border bg-white";
+    const base = "inline-block px-2.5 py-1 text-xs font-medium rounded-full border";
 
     switch ((status || "").toUpperCase()) {
       case "PAID":
@@ -207,178 +198,195 @@ export default function BookingEdit() {
   );
 
   return (
-    <div className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {error}
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700">
-          {successMessage}
-        </div>
-      )}
-
-      {/* Booking Details Section */}
-      <div className="bg-white border rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Booking Details</h2>
-
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <p className="text-gray-600 text-sm">Booking ID</p>
-            <p className="font-medium">{booking.booking_code}</p>
-          </div>
-
-          <div>
-            <p className="text-gray-600 text-sm">Customer</p>
-            <p className="font-medium">{booking.user?.name || "-"}</p>
-          </div>
-
-          <div>
-            <p className="text-gray-600 text-sm">Email</p>
-            <p className="font-medium">{booking.user?.email || "-"}</p>
-          </div>
-
-          <div>
-            <p className="text-gray-600 text-sm">Amount</p>
-            <p className="font-medium">
-              ${booking.final_price_usd?.toFixed(2) || "-"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-gray-600 text-sm">Status</p>
-            <p className={getStatusStyle(booking.status)}>
-              {booking.status || "PROCESSING"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-gray-600 text-sm">Payment Status</p>
-            <p className={getPaymentStatusStyle(booking.payment_status)}>
-              {booking.payment_status || "PENDING"}
-            </p>
+    <div className="p-4">
+      <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
+        {/* Header */}
+        <div className="p-5 border-b border-blue-200">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Booking</h1>
+              <p className="text-sm text-gray-600 mt-1">{booking.booking_code}</p>
+            </div>
+            <button
+              onClick={() => navigate(`/admin/bookings/${bookingId}`)}
+              className="px-4 py-2 border border-blue-200 rounded-lg text-gray-700 font-medium hover:bg-blue-50 transition"
+            >
+              View Booking
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Ticket File Management Section */}
-      <div className="bg-white border rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Ticket File Management</h2>
+        <div className="p-5 space-y-6">
+          {/* Messages */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+              ❌ {error}
+            </div>
+          )}
 
-        {/* Current Ticket File Info */}
-        <div className="mb-6">
-          <p className="text-gray-600 text-sm mb-2">Current Ticket File</p>
-          {ticketStatus ? (
-            ticketStatus.has_ticket ? (
-              <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded">
-                <span className="px-2.5 py-0.5 bg-green-100 text-green-800 rounded text-xs font-medium">
-                   Uploaded
-                </span>
-                <div className="flex-1">
-                  <p className="text-xs text-gray-600">
-                    {new Date(ticketStatus.ticket_uploaded_at).toLocaleString()}
-                  </p>
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 text-sm">
+              ✓ {successMessage}
+            </div>
+          )}
+
+          {/* Booking Details Section */}
+          <section>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Booking Details</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Booking ID</p>
+                <p className="text-sm font-medium text-gray-900">{booking.booking_code}</p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Customer</p>
+                <p className="text-sm font-medium text-gray-900">{booking.user?.name || "-"}</p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Email</p>
+                <p className="text-sm font-medium text-gray-900">{booking.user?.email || "-"}</p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Amount (USD)</p>
+                <p className="text-sm font-medium text-gray-900">
+                  ${booking.final_price_usd?.toFixed(2) || "-"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Status</p>
+                <div className={getStatusStyle(booking.status)}>
+                  {booking.status || "PROCESSING"}
                 </div>
               </div>
-            ) : (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                <span className="px-2.5 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">
-                   Not Uploaded
-                </span>
+
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Payment Status</p>
+                <div className={getPaymentStatusStyle(booking.payment_status)}>
+                  {booking.payment_status || "PENDING"}
+                </div>
               </div>
-            )
-          ) : (
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
-              <p className="text-sm text-gray-600 animate-pulse">Loading...</p>
             </div>
-          )}
-        </div>
+          </section>
 
-        {/* Upload New Ticket Section */}
-        {!hasTicketUrl && (
-          <div className="mt-4 space-y-3 p-4 bg-gray-50 rounded border border-gray-200">
-            <h3 className="font-medium text-sm">Upload Ticket File</h3>
-            <p className="text-xs text-gray-600">
-              Upload a new ticket file for this booking
-            </p>
+          {/* Ticket File Management Section */}
+          <section className="border-t border-blue-200 pt-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Ticket File Management</h2>
 
-            <div className="flex gap-2">
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.zip"
-                onChange={handleUploadFileChange}
-                disabled={updating}
-                className="flex-1 border rounded px-3 py-2 text-sm"
-              />
+            {/* Current Ticket File Info */}
+            <div className="mb-6">
+              <p className="text-sm font-medium text-gray-700 mb-3">Current Ticket File</p>
+              {ticketStatus ? (
+                ticketStatus.has_ticket ? (
+                  <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium border border-green-200">
+                      ✓ Uploaded
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-600">
+                        {new Date(ticketStatus.ticket_uploaded_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium border border-yellow-200">
+                      ⚠ Not Uploaded
+                    </span>
+                  </div>
+                )
+              ) : (
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-sm text-gray-600 animate-pulse">Loading...</p>
+                </div>
+              )}
+            </div>
+
+            {/* Upload New Ticket Section */}
+            {!hasTicketUrl && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-semibold text-gray-800 mb-2">Upload Ticket File</h3>
+                <p className="text-xs text-gray-600 mb-4">
+                  Upload a new ticket file for this booking
+                </p>
+
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.zip"
+                    onChange={handleUploadFileChange}
+                    disabled={updating}
+                    className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  <button
+                    onClick={handleUploadNewTicket}
+                    disabled={updating || !uploadFile}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
+                  >
+                    {updating ? "Uploading..." : "Upload"}
+                  </button>
+
+                  {uploadFile && (
+                    <p className="text-xs text-gray-600">
+                      File selected: <span className="font-medium">{uploadFile.name}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Replace Ticket File Section */}
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-2">Replace Ticket File</h3>
+              <p className="text-xs text-gray-600 mb-4">
+                Select a new file to replace the current ticket
+              </p>
+
+              <div className="space-y-3">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.zip"
+                  onChange={handleTicketFileChange}
+                  disabled={updating}
+                  className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <button
+                  onClick={handleReplaceTicket}
+                  disabled={updating || !ticketFile}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
+                >
+                  {updating ? "Uploading..." : "Replace"}
+                </button>
+
+                {ticketFile && (
+                  <p className="text-xs text-gray-600">
+                    File selected: <span className="font-medium">{ticketFile.name}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Delete Ticket File Section */}
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-2">Delete Ticket File</h3>
+              <p className="text-xs text-gray-600 mb-4">
+                This action will permanently delete the ticket file. This cannot be undone.
+              </p>
               <button
-                onClick={handleUploadNewTicket}
-                disabled={updating || !uploadFile}
-                className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleDeleteTicket}
+                disabled={updating}
+                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
               >
-                {updating ? "Uploading..." : "Upload"}
+                {updating ? "Deleting..." : "Delete Ticket File"}
               </button>
             </div>
-
-            {uploadFile && (
-              <p className="text-xs text-gray-600">
-                File selected: <span className="font-medium">{uploadFile.name}</span>
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Replace Ticket File Section */}
-        <div className="space-y-3 p-4 bg-gray-50 rounded border border-gray-200">
-          <h3 className="font-medium text-sm">Replace Ticket File</h3>
-          <p className="text-xs text-gray-600">
-            Select a new file to replace the current ticket
-          </p>
-
-          <div className="flex gap-2">
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx,.zip"
-              onChange={handleTicketFileChange}
-              disabled={updating}
-              className="flex-1 border rounded px-3 py-2 text-sm"
-            />
-            <button
-              onClick={handleReplaceTicket}
-              disabled={updating || !ticketFile}
-              className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {updating ? "Uploading..." : "Replace"}
-            </button>
-          </div>
-
-          {ticketFile && (
-            <p className="text-xs text-gray-600">
-              File selected: <span className="font-medium">{ticketFile.name}</span>
-            </p>
-          )}
+          </section>
         </div>
-
-
-        {/* Delete Ticket File Section */}
-
-          <div className="mt-4 p-4 bg-gray-50 rounded border border-red-200">
-            <h3 className="font-medium text-sm text-gray-900 mb-2">
-              Delete Ticket File
-            </h3>
-            <p className="text-xs text-gray-700 mb-3">
-              This action will permanently delete the ticket file. This cannot be undone.
-            </p>
-            <button
-              onClick={handleDeleteTicket}
-              disabled={updating}
-              className="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {updating ? "Deleting..." : "Delete Ticket File"}
-            </button>
-          </div>
-        </div>
+      </div>
     </div>
   );
 }

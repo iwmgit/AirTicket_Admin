@@ -164,8 +164,25 @@ export default function FlightManagement() {
 
   const formatDisplayDate = (dateString) => {
     if (!dateString) return "";
-    const date = new Date(dateString + "T00:00:00");
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    try {
+      // Handle both ISO timestamps and date-only strings
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "N/A";
+      return date.toLocaleString();
+    } catch (e) {
+      return "N/A";
+    }
   };
 
   // Handlers
@@ -253,21 +270,27 @@ export default function FlightManagement() {
     try {
       await updateExchangeRate(usdToMmkRate);
 
+      // Refresh the exchange rate after successful update
+      const rateData = await getExchangeRate();
+      setCurrentRate(rateData?.usd_to_mmk || 0);
+      setLastUpdated(rateData?.created_at);
+      setUsdToMmkRate(String(rateData?.usd_to_mmk || ""));
+
       // Recalculate prices with new rate
       const updatedResults = searchResults.map(flight => ({
         ...flight,
-        final_price_mmk: flight.final_price_usd * parseFloat(usdToMmkRate),
+        final_price_mmk: flight.final_price_usd * parseFloat(rateData?.usd_to_mmk || 1),
         flight_snapshot: {
           ...flight.flight_snapshot,
-          final_price_mmk: flight.final_price_usd * parseFloat(usdToMmkRate),
+          final_price_mmk: flight.final_price_usd * parseFloat(rateData?.usd_to_mmk || 1),
         },
       }));
 
       setSearchResults(updatedResults);
+      alert("✓ Exchange rate updated successfully!");
       setOpenCurrencyModal(false);
-      // Optional: Show success message
     } catch (err) {
-      console.error("Failed to update exchange rate:", err);
+      alert(" Failed to update exchange rate: " + err.message);
     }
   };
 
@@ -275,9 +298,15 @@ export default function FlightManagement() {
     try {
       await updatePricingConfig(globalMarkup);
       
+      // Refresh the pricing config after successful update
+      const pricingData = await getPricingConfig();
+      setCurrentMarkup(pricingData?.global_markup_percentage || 0);
+      setPricingUpdatedAt(pricingData?.updated_at);
+      setGlobalMarkup(String(pricingData?.global_markup_percentage || ""));
+      
       // Recalculate prices with new markup
       const updatedResults = searchResults.map(flight => {
-        const markupMultiplier = 1 + (parseFloat(globalMarkup) / 100);
+        const markupMultiplier = 1 + (parseFloat(pricingData?.global_markup_percentage || 0) / 100);
         return {
           ...flight,
           final_price_usd: flight.flight_snapshot.base_price_usd * markupMultiplier,
@@ -289,13 +318,12 @@ export default function FlightManagement() {
       });
 
       setSearchResults(updatedResults);
-      setCurrentMarkup(parseFloat(globalMarkup));
+      alert("✓ Pricing configuration updated successfully!");
       setOpenPricingModal(false);
-      // Optional: Show success message
     } catch (err) {
-      console.error("Failed to update pricing config:", err);
+      alert(" Failed to update pricing config: " + err.message);
     }
-  }; 
+  };
 
   const CalendarIcon = (
   <svg
