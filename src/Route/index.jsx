@@ -12,6 +12,7 @@ import UserManagement from "../pages/user/UserManagement";
 import UserView from "../pages/user/UserView";
 import UserEdit from "../pages/user/UserEdit";
 import StaffManagement from "../pages/staff/StaffManagement";
+import StaffForm from "../pages/staff/StaffForm";
 import StaffView from "../pages/staff/StaffView";
 import StaffEdit from "../pages/staff/StaffEdit";
 import FlightOverride from "../pages/flight/FlightOverride";
@@ -21,7 +22,7 @@ import ContentManagement from "../pages/content/ContentManagement";
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/admin" replace />,
+    element: <Navigate to="/signin" replace />,
   },
   {
     path: "/signin",
@@ -30,7 +31,9 @@ export const router = createBrowserRouter([
   {
     path: "/admin",
     element: (
-      <AdminLayout />
+      <RequireAuth>
+        <AdminLayout />
+      </RequireAuth>
     ),
     children: [
       {
@@ -78,6 +81,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireRole role="SUPER_ADMIN">
             <StaffManagement />
+          </RequireRole>
+        ),
+      },
+      {
+        path: "staff/staff-form",
+        element: (
+          <RequireRole role="SUPER_ADMIN">
+            <StaffForm />
           </RequireRole>
         ),
       },
