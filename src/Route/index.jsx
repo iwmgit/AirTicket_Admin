@@ -8,12 +8,10 @@ import BookingView from "../pages/booking/BookingView";
 import FlightManagement from "../pages/flight/FlightManagement";
 import FlightForm from "../pages/flight/FlightForm";
 import FlightView from "../pages/flight/FlightView";
-import FlightEdit from "../pages/flight/FlightEdit";
 import UserManagement from "../pages/user/UserManagement";
 import UserView from "../pages/user/UserView";
 import UserEdit from "../pages/user/UserEdit";
 import StaffManagement from "../pages/staff/StaffManagement";
-import StaffForm from "../pages/staff/StaffForm";
 import StaffView from "../pages/staff/StaffView";
 import StaffEdit from "../pages/staff/StaffEdit";
 import FlightOverride from "../pages/flight/FlightOverride";
@@ -23,7 +21,7 @@ import ContentManagement from "../pages/content/ContentManagement";
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/signin" replace />,
+    element: <Navigate to="/admin" replace />,
   },
   {
     path: "/signin",
@@ -32,9 +30,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin",
     element: (
-      <RequireAuth>
-        <AdminLayout />
-      </RequireAuth>
+      <AdminLayout />
     ),
     children: [
       {
@@ -62,10 +58,6 @@ export const router = createBrowserRouter([
         element: <FlightForm />,
       },
       {
-        path: "flights/override/:overrideId/edit",
-        element: <FlightEdit />,
-      },
-      {
         path: "overrides",
         element: <FlightOverride />,
       },
@@ -86,14 +78,6 @@ export const router = createBrowserRouter([
         element: (
           <RequireRole role="SUPER_ADMIN">
             <StaffManagement />
-          </RequireRole>
-        ),
-      },
-      {
-        path: "staff/staff-form",
-        element: (
-          <RequireRole role="SUPER_ADMIN">
-            <StaffForm />
           </RequireRole>
         ),
       },

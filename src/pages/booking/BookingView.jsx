@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getBookingById, deleteBooking, getSecureTicket, getBookingAudit, getTicketStatus } from "../../config/api";
+import Notification from "../../components/Notification";
 
 export default function BookingView() {
   const { bookingId } = useParams();
@@ -14,6 +15,7 @@ export default function BookingView() {
   const [auditData, setAuditData] = useState(null);
   const [auditLoading, setAuditLoading] = useState(false);
   const [showAuditModal, setShowAuditModal] = useState(false);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
 
   useEffect(() => {
     let mounted = true;
@@ -56,7 +58,7 @@ export default function BookingView() {
       setAuditData(data);
       setShowAuditModal(true);
     } catch (err) {
-      alert("Failed to load audit history: " + err.message);
+      setNotification({ message: "Failed to load audit history: " + err.message, type: "error" });
     } finally {
       setAuditLoading(false);
     }
@@ -66,9 +68,10 @@ export default function BookingView() {
     if (window.confirm("Are you sure you want to delete this booking?")) {
       try {
         await deleteBooking(bookingId);
-        navigate("/admin/bookings");
+        setNotification({ message: "Booking deleted successfully", type: "success" });
+        setTimeout(() => navigate("/admin/bookings"), 1500);
       } catch (err) {
-        alert("Failed to delete booking: " + err.message);
+        setNotification({ message: "Failed to delete booking: " + err.message, type: "error" });
       }
     }
   };
@@ -86,8 +89,9 @@ export default function BookingView() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      setNotification({ message: "Ticket downloaded successfully", type: "success" });
     } catch (err) {
-      alert("Failed to download ticket: " + (err.message || "Unknown error"));
+      setNotification({ message: "Failed to download ticket: " + (err.message || "Unknown error"), type: "error" });
     } finally {
       setDownloading(false);
     }
@@ -139,6 +143,11 @@ export default function BookingView() {
 
   return (
     <div className="p-4">
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
       <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
         {/* Header */}
         <div className="p-5 border-b border-blue-200">
@@ -278,7 +287,7 @@ export default function BookingView() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium border border-green-200">
-                        ✓ Uploaded
+                         Uploaded
                       </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -304,7 +313,7 @@ export default function BookingView() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium border border-yellow-200">
-                        ⚠ Pending
+                         Pending
                       </span>
                     </div>
                     <p className="text-sm text-gray-700">

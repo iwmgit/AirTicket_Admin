@@ -7,6 +7,7 @@ import {
   uploadBookingTicket,
   getTicketStatus,
 } from "../../config/api";
+import Notification from "../../components/Notification";
 
 export default function BookingEdit() {
   const { bookingId } = useParams();
@@ -17,7 +18,7 @@ export default function BookingEdit() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState(false);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
   const [ticketStatus, setTicketStatus] = useState(null);
 
   const adminEmail = "admin@example.com";
@@ -58,23 +59,22 @@ export default function BookingEdit() {
 
   const handleTicketFileChange = (e) => {
     setTicketFile(e.target.files?.[0] || null);
-    setSuccessMessage(null);
+    setNotification({ message: "", type: "success" });
   };
 
   const handleUploadFileChange = (e) => {
     setUploadFile(e.target.files?.[0] || null);
-    setSuccessMessage(null);
+    setNotification({ message: "", type: "success" });
   };
 
   const handleReplaceTicket = async () => {
     if (!ticketFile) {
-      setError("Please select a file to upload");
+      setNotification({ message: "Please select a file to upload", type: "error" });
       return;
     }
 
     try {
       setUpdating(true);
-      setError(null);
       await replaceBookingTicketFile(bookingId, ticketFile, adminEmail);
 
       const updatedBooking = await getBookingById(bookingId);
@@ -84,11 +84,9 @@ export default function BookingEdit() {
       setTicketStatus(status);
       
       setTicketFile(null);
-      setSuccessMessage("Ticket file replaced successfully");
-
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setNotification({ message: "Ticket file replaced successfully", type: "success" });
     } catch (err) {
-      setError("Failed to replace ticket file: " + (err.message || "Unknown error"));
+      setNotification({ message: "Failed to replace ticket file: " + (err.message || "Unknown error"), type: "error" });
     } finally {
       setUpdating(false);
     }
@@ -96,13 +94,12 @@ export default function BookingEdit() {
 
   const handleUploadNewTicket = async () => {
     if (!uploadFile) {
-      setError("Please select a file to upload");
+      setNotification({ message: "Please select a file to upload", type: "error" });
       return;
     }
 
     try {
       setUpdating(true);
-      setError(null);
       await uploadBookingTicket(bookingId, uploadFile, adminEmail, "CONFIRMED");
 
       const updatedBooking = await getBookingById(bookingId);
@@ -112,11 +109,9 @@ export default function BookingEdit() {
       setTicketStatus(status);
       
       setUploadFile(null);
-      setSuccessMessage("Ticket file uploaded successfully");
-
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setNotification({ message: "Ticket file uploaded successfully", type: "success" });
     } catch (err) {
-      setError("Failed to upload ticket file: " + (err.message || "Unknown error"));
+      setNotification({ message: "Failed to upload ticket file: " + (err.message || "Unknown error"), type: "error" });
     } finally {
       setUpdating(false);
     }
@@ -130,7 +125,6 @@ export default function BookingEdit() {
 
     try {
       setUpdating(true);
-      setError(null);
       await deleteBookingTicketFile(bookingId, adminEmail);
 
       const updatedBooking = await getBookingById(bookingId);
@@ -139,11 +133,9 @@ export default function BookingEdit() {
       const status = await getTicketStatus(bookingId);
       setTicketStatus(status);
       
-      setSuccessMessage("Ticket file deleted successfully");
-
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setNotification({ message: "Ticket file deleted successfully", type: "success" });
     } catch (err) {
-      setError("Failed to delete ticket file: " + (err.message || "Unknown error"));
+      setNotification({ message: "Failed to delete ticket file: " + (err.message || "Unknown error"), type: "error" });
     } finally {
       setUpdating(false);
     }
@@ -199,6 +191,11 @@ export default function BookingEdit() {
 
   return (
     <div className="p-4">
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
       <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
         {/* Header */}
         <div className="p-5 border-b border-blue-200">
@@ -217,18 +214,6 @@ export default function BookingEdit() {
         </div>
 
         <div className="p-5 space-y-6">
-          {/* Messages */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
-              ❌ {error}
-            </div>
-          )}
-
-          {successMessage && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 text-sm">
-              ✓ {successMessage}
-            </div>
-          )}
 
           {/* Booking Details Section */}
           <section>

@@ -4,11 +4,13 @@ import {
   getAllFlightOverrides,
   disableFlightOverride,
 } from "../../config/api";
+import Notification from "../../components/Notification";
 
 export default function FlightOverride() {
   const navigate = useNavigate();
   const [overrideFlights, setOverrideFlights] = useState([]);
   const [loadingOverrides, setLoadingOverrides] = useState(false);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
 
   const fetchOverrides = async () => {
     setLoadingOverrides(true);
@@ -33,15 +35,21 @@ export default function FlightOverride() {
         setOverrideFlights(prev =>
           prev.map(o => (o.id === overrideId ? { ...o, is_active: false } : o))
         );
-        alert("✓ Override disabled successfully");
+        setNotification({ message: "Override disabled successfully!", type: "success" });
       } catch (err) {
-        alert("❌ Failed to disable override: " + err.message);
+        setNotification({ message: "Failed to disable override: " + err.message, type: "error" });
       }
     }
   };
 
   return (
     <div className="p-4">
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
+
       <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
         {/* Header */}
         <div className="p-5 border-b border-blue-200">

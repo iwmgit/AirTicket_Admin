@@ -61,10 +61,10 @@ export default function StaffView() {
   const activity = staff.activity || {};
 
   return (
-    <div className="bg-white">
+    <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b bg-gray-50">
-        <h2 className="text-lg font-semibold">Staff Details</h2>
+      <div className="px-6 py-4 border-b border-blue-200 bg-blue-50">
+        <h2 className="text-lg font-semibold text-gray-800">Staff Details</h2>
         <p className="text-sm text-gray-500 mt-1">
           View staff information
         </p>
@@ -99,8 +99,8 @@ export default function StaffView() {
         </div>
 
         {/* Personal Information */}
-        <div className="py-6 border-b">
-          <h4 className="text-lg font-semibold mb-4">Personal Information</h4>
+        <div className="py-6 border-b border-blue-200">
+          <h4 className="text-lg font-semibold mb-4 text-gray-800">Personal Information</h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -123,25 +123,25 @@ export default function StaffView() {
 
         {/* Activity Summary */}
         {Object.keys(activity).length > 0 && (
-          <div className="py-6">
-            <h4 className="text-lg font-semibold mb-4">Activity Summary</h4>
+          <div className="py-6 border-b border-blue-200">
+            <h4 className="text-lg font-semibold mb-4 text-gray-800">Activity Summary</h4>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="border rounded p-4 text-center">
+              <div className="border border-blue-200 rounded-lg p-4 text-center hover:bg-blue-50 transition">
                 <p className="text-sm text-gray-500">Total Logins</p>
                 <p className="text-2xl font-semibold">
                   {(activity.totalLogins || 0).toLocaleString()}
                 </p>
               </div>
 
-              <div className="border rounded p-4 text-center">
+              <div className="border border-blue-200 rounded-lg p-4 text-center hover:bg-blue-50 transition">
                 <p className="text-sm text-gray-500">Actions This Month</p>
                 <p className="text-2xl font-semibold">
                   {(activity.actionsThisMonth || 0).toLocaleString()}
                 </p>
               </div>
 
-              <div className="border rounded p-4 text-center">
+              <div className="border border-blue-200 rounded-lg p-4 text-center hover:bg-blue-50 transition">
                 <p className="text-sm text-gray-500">Account Age (days)</p>
                 <p className="text-2xl font-semibold">
                   {activity.accountAge || 0}
@@ -152,16 +152,16 @@ export default function StaffView() {
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 pt-6 border-t px-6 py-6">
+        <div className="flex justify-end gap-3 pt-6 border-t border-blue-200">
           <button
             onClick={() => navigate("/admin/staff")}
-            className="px-4 py-2 border rounded text-sm hover:bg-gray-50"
+            className="px-4 py-2 border border-blue-200 rounded-lg text-sm hover:bg-blue-50 transition"
           >
             Back
           </button>
           <button
             onClick={() => navigate(`/admin/staff/${staff.id}/edit`)}
-            className="px-4 py-2 bg-black text-white rounded text-sm hover:bg-gray-900"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
           >
             Edit Staff
           </button>

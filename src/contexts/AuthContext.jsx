@@ -58,12 +58,18 @@ export function AuthProvider({ children }) {
       setError("");
 
       const data = await createStaffUser(name, email, password);
-      const authToken = data.token || data.access_token;
-      if (!authToken) throw new Error("Token not found in response");
-
-      return { success: true, user: data.user };
+      console.log("API Response for createStaff:", data);
+      
+      // Staff creation doesn't require a token, just check if we got a response
+      if (data && (data.id || data.user || data.success !== false)) {
+        console.log("Staff created successfully");
+        return { success: true, user: data };
+      } else {
+        throw new Error(data?.error || "Failed to create staff account");
+      }
     } catch (err) {
       const errorMsg = err.message || "Failed to create staff account";
+      console.error("Create staff error:", errorMsg);
       setError(errorMsg);
       return { success: false, error: errorMsg };
     } finally {

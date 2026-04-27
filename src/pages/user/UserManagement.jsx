@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllCustomers, deactivateCustomer, activateCustomer } from "../../config/api";
+import UserEditModal from "./UserEdit";
+import Notification from "../../components/Notification";
 
 export default function UserManagement() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
 
   useEffect(() => {
     let mounted = true;
@@ -30,17 +35,39 @@ export default function UserManagement() {
     return () => (mounted = false);
   }, []);
 
+
+
+  const handleEditUser = (userId) => {
+    setEditingUserId(userId);
+    setShowEditModal(true);
+  };
+
+  const handleUserUpdated = async () => {
+    setShowEditModal(false);
+    setEditingUserId(null);
+    setNotification({ message: "Customer updated successfully!", type: "success" });
+    // Refresh users list
+    try {
+      const data = await getAllCustomers();
+      setUsers(data);
+    } catch (err) {
+      console.error("Failed to refresh users list:", err);
+    }
+  };
+
   const handleToggleStatus = async (userId, isActive) => {
     try {
       if (isActive) {
         await deactivateCustomer(userId);
+        setNotification({ message: "Customer deactivated successfully!", type: "success" });
       } else {
         await activateCustomer(userId);
+        setNotification({ message: "Customer activated successfully!", type: "success" });
       }
       const data = await getAllCustomers();
       setUsers(data);
     } catch (err) {
-      alert("Failed to update status: " + err.message);
+      setNotification({ message: err.message || "Failed to update status", type: "error" });
     }
   };
 
@@ -48,14 +75,23 @@ export default function UserManagement() {
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
-    <div className="p-4">
-      <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
-        {/* Header */}
-        <div className="p-5 border-b border-blue-200">
-          <h2 className="text-lg font-semibold text-gray-800">User Management</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage user accounts and permissions</p>
-        </div>
+    <div>
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
 
+      {/* Edit Modal */}
+      {showEditModal && editingUserId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto w-full max-w-md">
+            <UserEditModal id={editingUserId} onClose={() => { setShowEditModal(false); setEditingUserId(null); }} onSuccess={handleUserUpdated} onNotify={(msg, type) => setNotification({ message: msg, type })} />
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
         {/* Filters */}
         <div className="p-5 border-b border-blue-200">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
@@ -176,7 +212,7 @@ export default function UserManagement() {
                         </button>
 
                         <button
-                          onClick={() => navigate(`/admin/users/${user.id}/edit`)}
+                        onClick={() => handleEditUser(user.id)}
                           className="w-8 h-8 flex items-center justify-center border border-blue-200 rounded-lg text-gray-600 hover:bg-blue-50 transition"
                           title="Edit"
                         >

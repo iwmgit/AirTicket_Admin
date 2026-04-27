@@ -13,7 +13,7 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col">
         <AdminHeader />
 
-        <main className="p-6 overflow-auto">
+        <main className="p-3 overflow-auto">
           <Outlet />
         </main>
       </div>

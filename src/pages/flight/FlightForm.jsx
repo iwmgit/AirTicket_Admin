@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { createFlightOverride, getPricingConfig } from "../../config/api";
+import Notification from "../../components/Notification";
 
 // Convert minutes to hours (supports decimal values)
 const convertMinutesToHours = (minutes) => {
@@ -32,6 +33,7 @@ export default function FlightForm() {
   const [error, setError] = useState(null);
   const [currentMarkup, setCurrentMarkup] = useState(null);
   const [markupLoading, setMarkupLoading] = useState(true);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
 
   // Fetch pricing config on mount
   useEffect(() => {
@@ -81,16 +83,18 @@ export default function FlightForm() {
       };
 
       if (mode === "update") {
-        alert("Flight overrides can no longer be updated. Please delete and create a new one.");
-        navigate("/admin/flights");
+        setError("Flight overrides can no longer be updated. Please delete and create a new one.");
+        setNotification({ message: "Flight overrides can no longer be updated. Please delete and create a new one.", type: "error" });
+        setTimeout(() => navigate("/admin/flights"), 2000);
       } else {
         const durationHours = convertMinutesToHours(formData.durationHours);
         await createFlightOverride(submitData, durationHours);
-        alert("Flight override created successfully");
+        setNotification({ message: "Flight override created successfully!", type: "success" });
+        setTimeout(() => navigate("/admin/flights"), 2000);
       }
-      navigate("/admin/flights");
     } catch (err) {
       setError(err.message);
+      setNotification({ message: err.message || "Failed to create flight override", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -100,6 +104,12 @@ export default function FlightForm() {
 
   return (
     <div className="p-4">
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
+
       <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
         {/* Header */}
         <div className="p-5 border-b border-blue-200">

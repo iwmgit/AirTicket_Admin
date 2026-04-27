@@ -42,96 +42,92 @@ export default function UserView() {
   if (!user) return <div className="p-6 text-center">User not found</div>;
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Customer Details</h1>
-          <p className="text-sm text-gray-500">
+    <div className="p-4">
+      <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-blue-200 bg-blue-50">
+          <h2 className="text-lg font-semibold text-gray-800">Customer Details</h2>
+          <p className="text-sm text-gray-500 mt-1">
             View customer information and booking history
           </p>
         </div>
-        <button
-          onClick={() => navigate("/admin/users")}
-          className="text-gray-500 hover:text-black text-xl"
-        >
-          ×
-        </button>
-      </div>
 
-      {/* Profile */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-2xl font-medium">
-          {user.full_name.charAt(0)}
-        </div>
-        <div>
-          <p className="font-medium text-lg">{user.full_name}</p>
-          <p className="text-gray-600">{user.email}</p>
-          <div className="flex gap-2 mt-2">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                user.is_active
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
+        <div className="p-6">
+          {/* Profile */}
+          <div className="flex items-start gap-5 pb-6 border-b border-blue-200">
+            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-medium">
+              {user.full_name.charAt(0)}
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold">{user.full_name}</h3>
+              <p className="text-gray-600 mt-1">{user.email}</p>
+
+              <div className="mt-3 flex gap-3">
+                <span
+                  className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+                    user.is_active
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {user.is_active ? "Active" : "Inactive"}
+                </span>
+                <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {user.is_email_verified ? "Email Verified" : "Unverified"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Personal Information */}
+          <div className="py-6 border-b border-blue-200">
+            <h4 className="text-lg font-semibold mb-4 text-gray-800">Personal Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Customer ID</label>
+                <p className="mt-1 font-medium">{user.id}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Full Name</label>
+                <p className="mt-1 font-medium">{user.full_name}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Email Address</label>
+                <p className="mt-1 font-medium">{user.email}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Phone Number</label>
+                <p className="mt-1 font-medium">{user.phone || "N/A"}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Email Verified</label>
+                <p className="mt-1 font-medium">
+                  {user.is_email_verified ? "Yes" : "No"}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Registration Date</label>
+                <p className="mt-1 font-medium">
+                  {new Date(user.created_at).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-6 border-t border-blue-200">
+            <button
+              onClick={() => navigate("/admin/users")}
+              className="px-4 py-2 border border-blue-200 rounded-lg text-sm hover:bg-blue-50 transition"
             >
-              {user.is_active ? "Active" : "Inactive"}
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-              {user.is_email_verified ? "Email Verified" : "Unverified"}
-            </span>
+              Close
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* Personal Information */}
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <p className="text-xs text-gray-600">Customer ID</p>
-            <p className="font-medium">{user.id}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600">Full Name</p>
-            <p className="font-medium">{user.full_name}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600">Email Address</p>
-            <p className="font-medium">{user.email}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600">Phone Number</p>
-            <p className="font-medium">{user.phone || "N/A"}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600">Email Verified</p>
-            <p className="font-medium">
-              {user.is_email_verified ? "Yes" : "No"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600">Registration Date</p>
-            <p className="font-medium">
-              {new Date(user.created_at).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-            </p>
-          </div>
-        </div>
-      </div>
-
-
-      {/* Footer */}
-      <div className="flex justify-end mt-8">
-        <button
-          onClick={() => navigate("/admin/users")}
-          className="px-6 py-2 border rounded hover:bg-gray-50"
-        >
-          Close
-        </button>
       </div>
     </div>
   );

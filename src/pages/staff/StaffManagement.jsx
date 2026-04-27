@@ -1,12 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllStaff, activateStaff, deactivateStaff } from "../../config/api";
+import StaffFormModal from "./StaffForm";
+import StaffEditModal from "./StaffEdit";
+import Notification from "../../components/Notification";
 
 export default function StaffManagement() {
   const navigate = useNavigate();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingStaffId, setEditingStaffId] = useState(null);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
 
   useEffect(() => {
     let mounted = true;
@@ -31,17 +38,51 @@ export default function StaffManagement() {
     };
   }, []);
 
+
+
+  const handleStaffCreated = async () => {
+    setShowModal(false);
+    setNotification({ message: "Staff account created successfully!", type: "success" });
+    // Refresh staff list
+    try {
+      const data = await getAllStaff();
+      setStaff(data);
+    } catch (err) {
+      console.error("Failed to refresh staff list:", err);
+    }
+  };
+
+  const handleEditStaff = (staffId) => {
+    setEditingStaffId(staffId);
+    setShowEditModal(true);
+  };
+
+  const handleStaffUpdated = async () => {
+    setShowEditModal(false);
+    setEditingStaffId(null);
+    setNotification({ message: "Staff member updated successfully!", type: "success" });
+    // Refresh staff list
+    try {
+      const data = await getAllStaff();
+      setStaff(data);
+    } catch (err) {
+      console.error("Failed to refresh staff list:", err);
+    }
+  };
+
   const handleToggleStatus = async (memberId, isActive) => {
     try {
       if (isActive) {
         await deactivateStaff(memberId);
+        setNotification({ message: "Staff member deactivated successfully!", type: "success" });
       } else {
         await activateStaff(memberId);
+        setNotification({ message: "Staff member activated successfully!", type: "success" });
       }
       const data = await getAllStaff();
       setStaff(data);
     } catch (err) {
-      alert("Failed to update status: " + err.message);
+      setNotification({ message: err.message || "Failed to update status", type: "error" });
     }
   };
 
@@ -49,12 +90,40 @@ export default function StaffManagement() {
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
-    <div className="p-4">
+    <div>
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
+
+      {/* Create Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto w-full max-w-md">
+            <StaffFormModal onClose={() => setShowModal(false)} onSuccess={handleStaffCreated} onNotify={(msg, type) => setNotification({ message: msg, type })} />
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingStaffId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto w-full max-w-md">
+            <StaffEditModal id={editingStaffId} onClose={() => { setShowEditModal(false); setEditingStaffId(null); }} onSuccess={handleStaffUpdated} onNotify={(msg, type) => setNotification({ message: msg, type })} />
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
         {/* Header */}
-        <div className="p-5 border-b border-blue-200">
-          <h2 className="text-lg font-semibold text-gray-800">Staff Management</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage staff members, roles, and permissions</p>
+        <div className="p-5 border-b border-blue-200 flex items-center justify-end sticky top-0 bg-blue-50">
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+          >
+             Create Staff
+          </button>
         </div>
 
         {/* Roles & Permissions */}
@@ -146,7 +215,7 @@ export default function StaffManagement() {
                       </button>
 
                       <button
-                        onClick={() => navigate(`/admin/staff/${member.id}/edit`)}
+                        onClick={() => handleEditStaff(member.id)}
                         className="w-8 h-8 flex items-center justify-center border border-blue-200 rounded-lg text-gray-600 hover:bg-blue-50 transition"
                         title="Edit"
                       >

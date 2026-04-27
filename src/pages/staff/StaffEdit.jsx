@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { getStaffById, updateStaff, activateStaff, deactivateStaff } from "../../config/api";
+import Notification from "../../components/Notification";
 
-export default function StaffEdit() {
-  const navigate = useNavigate();
-  const { id } = useParams();
+export default function StaffEditModal({ id, onClose, onSuccess, onNotify = () => {} }) {
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -44,10 +43,13 @@ export default function StaffEdit() {
         email: form.email,
         role: form.role,
       });
-      alert("Staff member updated successfully");
-      navigate("/admin/staff");
+      setError("");
+      onSuccess();
     } catch (err) {
-      setError(err.message || "Failed to update staff member");
+      const errorMsg = err.message || "Failed to update staff member";
+      setError(errorMsg);
+      setNotification({ message: errorMsg, type: "error" });
+      onNotify(errorMsg, "error");
     } finally {
       setSaving(false);
     }
@@ -69,76 +71,88 @@ export default function StaffEdit() {
       // Refresh staff data
       const data = await getStaffById(id);
       setForm(data);
-      alert(
-        isCurrentlyActive
-          ? "Staff member deactivated successfully"
-          : "Staff member activated successfully"
-      );
+      setNotification({ message: isCurrentlyActive ? "Staff member deactivated successfully" : "Staff member activated successfully", type: "success" });
+      onNotify(isCurrentlyActive ? "Staff member deactivated successfully" : "Staff member activated successfully", "success");
     } catch (err) {
-      setError(
-        "Failed to update status: " + (err.message || "Unknown error")
-      );
+      const errorMsg = "Failed to update status: " + (err.message || "Unknown error");
+      setError(errorMsg);
+      setNotification({ message: errorMsg, type: "error" });
+      onNotify(errorMsg, "error");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <div className="p-6 text-center">Loading...</div>;
   if (error && !form) return <div className="p-6 text-red-600">Error: {error}</div>;
   if (!form) return <div className="p-6">Staff member not found</div>;
 
   return (
-    <div className="bg-white">
+    <>
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
       {/* Header */}
-      <div className="px-6 py-4 border-b bg-gray-50">
-        <h2 className="text-lg font-semibold">Edit Staff Member</h2>
-        <p className="text-sm text-gray-500 mt-1">Update staff information</p>
+      <div className="p-5 border-b border-blue-200 bg-blue-50 flex items-center justify-between sticky top-0">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">Edit Staff Member</h2>
+          <p className="text-sm text-gray-500 mt-1">Update staff information</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 text-2xl font-light"
+        >
+          ×
+        </button>
       </div>
 
       {/* Body */}
       <div className="p-6 space-y-6">
         {error && (
-          <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+          <div className="p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg text-sm">
             {error}
           </div>
         )}
 
-        <h3 className="font-medium">Personal Information</h3>
+        <h3 className="font-medium text-gray-800">Personal Information</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm text-gray-600">Full Name</label>
+            <label className="text-sm font-medium text-gray-700">Full Name</label>
             <input
               name="name"
               value={form.name || ""}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 mt-1"
+              className="w-full border border-blue-200 rounded-lg px-3 py-2 mt-1 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-600">Email Address</label>
+            <label className="text-sm font-medium text-gray-700">Email Address</label>
             <input
               name="email"
               type="email"
               value={form.email || ""}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 mt-1"
+              className="w-full border border-blue-200 rounded-lg px-3 py-2 mt-1 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-600">Role</label>
+            <label className="text-sm font-medium text-gray-700">Role</label>
             <input
               name="role"
               value={form.role || ""}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 mt-1"
+              className="w-full border border-blue-200 rounded-lg px-3 py-2 mt-1 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-600">Status</label>
+            <label className="text-sm font-medium text-gray-700">Status</label>
             <div className="flex items-center gap-3 mt-1">
               <span
                 className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -153,10 +167,10 @@ export default function StaffEdit() {
                 type="button"
                 onClick={handleToggleStatus}
                 disabled={saving}
-                className={`px-3 py-1 rounded text-xs font-medium ${
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
                   form.is_active
-                    ? "bg-red-100 text-red-700 hover:bg-red-200"
-                    : "bg-green-100 text-green-700 hover:bg-green-200"
+                    ? "border border-red-200 text-red-700 hover:bg-red-50"
+                    : "border border-green-200 text-green-700 hover:bg-green-50"
                 } disabled:opacity-60`}
               >
                 {saving
@@ -171,15 +185,22 @@ export default function StaffEdit() {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-end px-6 py-4 border-t">
+      <div className="flex gap-3 items-center justify-end px-6 py-4 border-t border-blue-200">
+        <button
+          onClick={onClose}
+          disabled={saving}
+          className="px-5 py-2 border border-gray-300 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition disabled:opacity-50 font-medium"
+        >
+          Cancel
+        </button>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-black text-white px-5 py-2 rounded text-sm hover:bg-gray-800 disabled:opacity-50"
+          className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700 transition disabled:opacity-50 font-medium"
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
-    </div>
+    </>
   );
 }

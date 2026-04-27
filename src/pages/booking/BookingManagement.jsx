@@ -313,7 +313,7 @@ export default function BookingManagement() {
   }
 
 return (
-  <div className="p-4">
+  <div>
     <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
       {/* Filters */}
       <div className="p-5">

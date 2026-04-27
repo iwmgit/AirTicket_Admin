@@ -1,5 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import Notification from "../../components/Notification";
 
 
 export default function FlightEdit() {
@@ -10,6 +11,7 @@ export default function FlightEdit() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
 
   useEffect(() => {
     let mounted = true;
@@ -74,10 +76,12 @@ export default function FlightEdit() {
     try {
       // Pass the override object directly - it already has all needed fields
       await updateFlightOverride(overrideId, override);
-      alert("Flight override updated successfully");
-      navigate("/admin/overrides");
+      setNotification({ message: "Flight override updated successfully!", type: "success" });
+      setTimeout(() => navigate("/admin/overrides"), 2000);
     } catch (err) {
-      alert("Failed to update flight override: " + err.message);
+      const errorMsg = "Failed to update flight override: " + err.message;
+      setError(errorMsg);
+      setNotification({ message: errorMsg, type: "error" });
     } finally {
       setSaving(false);
     }
@@ -93,6 +97,12 @@ export default function FlightEdit() {
 
   return (
     <div className="max-w-5xl mx-auto bg-white rounded-lg p-8 border">
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
+
       <h2 className="text-2xl font-bold text-gray-800 mb-2">Edit Flight Override</h2>
       <p className="text-gray-600 mb-8">Override ID: {overrideId}</p>
 

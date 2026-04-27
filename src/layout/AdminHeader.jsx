@@ -21,8 +21,7 @@ const HEADER_CONFIG = {
   "/admin/staff": {
     title: "Staff Management",
     subtitle: "Manage staff members",
-    actionLabel: "+ New Staff",
-    actionPath: "/admin/staff/staff-form",
+
   },
 };
 

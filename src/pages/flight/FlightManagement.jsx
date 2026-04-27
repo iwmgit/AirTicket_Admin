@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   searchFlights,
-  searchRoundTripFlights,
   getExchangeRate,
   updateExchangeRate,
   getPricingConfig,    
   updatePricingConfig 
 } from "../../config/api";
+import Notification from "../../components/Notification";
 
 export default function FlightManagement() {
   const navigate = useNavigate();
@@ -26,18 +26,17 @@ export default function FlightManagement() {
   const [pricingUpdatedAt, setPricingUpdatedAt] = useState(null);
 
   // Search State
-  const [tripType, setTripType] = useState("oneWay");
   const [searchParams, setSearchParams] = useState({
     origin: "",
     destination: "",
     departureDate: "",
-    returnDate: "",
   });
 
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
 
   useEffect(() => {
     const fetchRate = async () => {
@@ -70,55 +69,7 @@ export default function FlightManagement() {
     console.log("Raw API Response:", flights);
 
     return flights.map((f) => {
-      // Check if it's a round-trip (has both outbound and inbound)
-      if (f.outbound && f.inbound) {
-        return {
-          type: "ROUND_TRIP",
-          adults: f.adults,
-          bundle_key: f.bundle_key,
-          flight_snapshot: {
-            bundle_key: f.bundle_key,
-            adults: f.adults,
-
-            outbound: {
-              airline: f.outbound.airline,
-              airline_code: f.outbound.airline_code,
-              flight_number: f.outbound.flight_number,
-              origin: f.outbound.origin,
-              destination: f.outbound.destination,
-              route: f.outbound.route,
-              departure_time: f.outbound.departure_time,
-              arrival_time: f.outbound.arrival_time,
-              duration_minutes: f.outbound.duration_minutes,
-            },
-
-            inbound: {
-              airline: f.inbound.airline,
-              airline_code: f.inbound.airline_code,
-              flight_number: f.inbound.flight_number,
-              origin: f.inbound.origin,
-              destination: f.inbound.destination,
-              route: f.inbound.route,
-              departure_time: f.inbound.departure_time,
-              arrival_time: f.inbound.arrival_time,
-              duration_minutes: f.inbound.duration_minutes,
-            },
-
-            base_price_usd: f.base_price_usd,
-            final_price_usd: f.final_price_usd,
-            final_price_mmk: f.final_price_mmk,
-            price_estimate_min_usd: f.price_estimate_min_usd,
-            price_estimate_max_usd: f.price_estimate_max_usd,
-            price_estimate_min_mmk: f.price_estimate_min_mmk,
-            price_estimate_max_mmk: f.price_estimate_max_mmk,
-            requires_admin_confirmation: f.requires_admin_confirmation,
-          },
-          final_price_usd: f.final_price_usd,
-          final_price_mmk: f.final_price_mmk,
-        };
-      }
-
-      // ONE_WAY flight
+      // ONE_WAY flight only
       return {
         type: "ONE_WAY",
         adults: f.adults,
@@ -196,33 +147,15 @@ export default function FlightManagement() {
       return;
     }
 
-    console.log("Search Params:", searchParams);
-
-    if (tripType === "roundTrip" && !searchParams.returnDate) {
-      setSearchError("Please fill in return date for round-trip search");
-      return;
-    }
-
     setIsSearching(true);
     setSearchError(null);
 
     try {
-      let results;
-
-      if (tripType === "oneWay") {
-        results = await searchFlights(
-          searchParams.origin,
-          searchParams.destination,
-          searchParams.departureDate
-        );
-      } else {
-        results = await searchRoundTripFlights(
-          searchParams.origin,
-          searchParams.destination,
-          searchParams.departureDate,
-          searchParams.returnDate
-        );
-      }
+      const results = await searchFlights(
+        searchParams.origin,
+        searchParams.destination,
+        searchParams.departureDate
+      );
 
       // Transform the API response
       const transformedResults = transformFlightData(results);
@@ -242,13 +175,11 @@ export default function FlightManagement() {
       origin: "",
       destination: "",
       departureDate: "",
-      returnDate: "",
     });
 
     setSearchResults([]);
     setHasSearched(false);
     setSearchError(null);
-    setTripType("oneWay");
   };
 
   const handleInputChange = (field, value) => {
@@ -256,14 +187,6 @@ export default function FlightManagement() {
       ...prev,
       [field]: value,
     }));
-  };
-
-  const handleTripTypeChange = (type) => {
-    setTripType(type);
-
-    if (type === "oneWay") {
-      handleInputChange("returnDate", "");
-    }
   };
 
   const handleUpdateRate = async () => {
@@ -287,10 +210,10 @@ export default function FlightManagement() {
       }));
 
       setSearchResults(updatedResults);
-      alert("✓ Exchange rate updated successfully!");
-      setOpenCurrencyModal(false);
+      setNotification({ message: "Exchange rate updated successfully!", type: "success" });
+      setOpenCurrencyModal(false)
     } catch (err) {
-      alert(" Failed to update exchange rate: " + err.message);
+      setNotification({ message: "Failed to update exchange rate: " + err.message, type: "error" });
     }
   };
 
@@ -318,10 +241,10 @@ export default function FlightManagement() {
       });
 
       setSearchResults(updatedResults);
-      alert("✓ Pricing configuration updated successfully!");
-      setOpenPricingModal(false);
+      setNotification({ message: "Pricing configuration updated successfully!", type: "success" });
+      setOpenPricingModal(false)
     } catch (err) {
-      alert(" Failed to update pricing config: " + err.message);
+      setNotification({ message: "Failed to update pricing config: " + err.message, type: "error" });
     }
   };
 
@@ -342,16 +265,17 @@ export default function FlightManagement() {
 
   // Render
   return (
-    <div className="p-4">
+    <div>
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
+
       <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
         {/* Header */}
-        <div className="p-5 border-b border-blue-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Flight Management</h2>
-              <p className="text-sm text-gray-500">Search and manage flights</p>
-            </div>
-
+        <div className="p-2 border-b border-blue-200">
+          <div className="flex items-center justify-end">
             <div className="flex gap-3">
               {isAdmin && (
                 <>
@@ -381,34 +305,7 @@ export default function FlightManagement() {
         </div>
 
         {/* Search Form */}
-        <div className="p-5 border-b border-blue-200">
-          {/* Trip Type Toggle */}
-          <div className="mb-4 flex gap-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="tripType"
-                value="oneWay"
-                checked={tripType === "oneWay"}
-                onChange={(e) => handleTripTypeChange(e.target.value)}
-                className="cursor-pointer"
-              />
-              <span className="text-sm font-medium">One-way</span>
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="tripType"
-                value="roundTrip"
-                checked={tripType === "roundTrip"}
-                onChange={(e) => handleTripTypeChange(e.target.value)}
-                className="cursor-pointer"
-              />
-              <span className="text-sm font-medium">Round-trip</span>
-            </label>
-          </div>
-
+        <div className="p-5">
           {/* Search Error */}
           {searchError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
@@ -420,7 +317,9 @@ export default function FlightManagement() {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
             {/* Origin */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Origin</label>
+              <label className="block text-sm font-medium text-slate-500 mb-3">
+                Origin
+              </label>
               <input
                 type="text"
                 className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -432,7 +331,9 @@ export default function FlightManagement() {
 
             {/* Destination */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Destination</label>
+              <label className="block text-sm font-medium text-slate-500 mb-3">
+                Destination
+              </label>
               <input
                 type="text"
                 className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -479,46 +380,6 @@ export default function FlightManagement() {
                 />
               </div>
             </div>
-
-            {/* Return Date */}
-            {tripType === "roundTrip" && (
-              <div>
-                <label className="block text-sm font-medium text-slate-500 mb-3">
-                  Return date
-                </label>
-                <div className="relative">
-                  <div className="h-10 rounded-2xl border border-gray-200 bg-white flex items-center px-4">
-                    <span className="mr-3 text-gray-400">{CalendarIcon}</span>
-                    <input
-                      type="text"
-                      readOnly
-                      value={formatDisplayDate(searchParams.returnDate)}
-                      placeholder="Select date "
-                      onClick={() => {
-                        const el = document.getElementById("return-date");
-                        if (el?.showPicker) {
-                          el.showPicker();
-                        } else if (el) {
-                          el.click();
-                        }
-                      }}
-                      className="w-full bg-transparent outline-none text-base text-slate-700 placeholder:text-gray-400 cursor-pointer"
-                    />
-                  </div>
-
-                  <input
-                    id="return-date"
-                    type="date"
-                    value={searchParams.returnDate}
-                    onChange={(e) =>
-                      handleInputChange("returnDate", e.target.value)
-                    }
-                    className="absolute inset-0 opacity-0 pointer-events-none"
-                    tabIndex={-1}
-                  />
-                </div>
-              </div>
-            )}
 
             {/* Actions */}
             <div className="flex gap-2 justify-end">
@@ -585,49 +446,31 @@ export default function FlightManagement() {
                         </td>
 
                         <td className="px-4 py-3 font-medium">
-                          {flight.type === "ROUND_TRIP"
-                            ? `${flight.flight_snapshot.outbound.flight_number} / ${flight.flight_snapshot.inbound.flight_number}`
-                            : flight.flight_snapshot.flight_number}
+                          {flight.flight_snapshot.flight_number}
                         </td>
 
                         <td className="px-4 py-3">
-                          {flight.type === "ROUND_TRIP"
-                            ? flight.flight_snapshot.outbound.airline
-                            : flight.flight_snapshot.airline}
+                          {flight.flight_snapshot.airline}
 
                           <div className="text-xs text-gray-500">
-                            {flight.type === "ROUND_TRIP"
-                              ? flight.flight_snapshot.outbound.airline_code
-                              : flight.flight_snapshot.airline_code}
+                            {flight.flight_snapshot.airline_code}
                           </div>
                         </td>
 
                         <td className="px-4 py-3">
-                          {flight.type === "ROUND_TRIP"
-                            ? `${flight.flight_snapshot.outbound.route} / ${flight.flight_snapshot.inbound.route}`
-                            : flight.flight_snapshot.route}
+                          {flight.flight_snapshot.route}
                         </td>
 
                         <td className="px-4 py-3 text-sm">
-                          {flight.type === "ROUND_TRIP"
-                            ? flight.flight_snapshot.outbound.departure_time
-                            : flight.flight_snapshot.departure_time}
+                          {flight.flight_snapshot.departure_time}
                         </td>
 
                         <td className="px-4 py-3 text-sm">
-                          {flight.type === "ROUND_TRIP"
-                            ? flight.flight_snapshot.inbound.arrival_time
-                            : flight.flight_snapshot.arrival_time}
+                          {flight.flight_snapshot.arrival_time}
                         </td>
 
                         <td className="px-4 py-3">
-                          {flight.type === "ROUND_TRIP"
-                            ? `${formatDuration(
-                                flight.flight_snapshot.outbound.duration_minutes
-                              )} / ${formatDuration(
-                                flight.flight_snapshot.inbound.duration_minutes
-                              )}`
-                            : formatDuration(flight.flight_snapshot.duration_minutes)}
+                          {formatDuration(flight.flight_snapshot.duration_minutes)}
                         </td>
 
                         <td className="px-4 py-3">{flight.adults}</td>
