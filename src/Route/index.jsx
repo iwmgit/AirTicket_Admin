@@ -18,6 +18,7 @@ import StaffView from "../pages/staff/StaffView";
 import StaffEdit from "../pages/staff/StaffEdit";
 import FlightOverride from "../pages/flight/FlightOverride";
 import BookingEdit from "../pages/booking/BookingEdit";
+import ContentManagement from "../pages/content/ContentManagement";
 
 export const router = createBrowserRouter([
   {
@@ -111,6 +112,10 @@ export const router = createBrowserRouter([
             <StaffEdit />
           </RequireRole>
         ),
+      },
+      {
+        path: "content",
+        element: <ContentManagement />,
       },
     ],
   },

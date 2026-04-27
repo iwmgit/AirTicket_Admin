@@ -412,6 +412,73 @@ export const updatePricingConfig = async (percentage) => {
   return response.data?.data ?? response.data;
 };
 
+// Content Management - Background Image
+export const getBackgroundImage = async () => {
+  const response = await apiClient.get("/content/background");
+  return response.data?.data ?? response.data;
+};
+
+export const updateBackgroundImage = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiClient.put(
+    "/content/background",
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
+  return response.data?.data ?? response.data;
+};
+
+// Content Management - Banners
+export const getAllBanners = async () => {
+  const response = await apiClient.get("/content/banners");
+  return response.data?.data ?? response.data;
+};
+
+export const createBanner = async (file, title, destinationCode, priority) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("title", title);
+  formData.append("destination_code", destinationCode);
+  formData.append("priority", priority);
+
+  const response = await apiClient.post(
+    "/content/banners",
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
+  return response.data?.data ?? response.data;
+};
+
+export const updateBanner = async (bannerId, updates) => {
+  const formData = new FormData();
+  
+  if (updates.file) formData.append("file", updates.file);
+  if (updates.title) formData.append("title", updates.title);
+  if (updates.destinationCode) formData.append("destination_code", updates.destinationCode);
+  if (updates.priority) formData.append("priority", updates.priority);
+  if (updates.isActive !== undefined) formData.append("is_active", updates.isActive);
+
+  const response = await apiClient.put(
+    `/content/banners/${bannerId}`,
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
+  return response.data?.data ?? response.data;
+};
+
+export const deactivateBanner = async (bannerId) => {
+  const response = await apiClient.delete(`/content/banners/${bannerId}`);
+  return response.data?.data ?? response.data;
+};
+
 
 // Export Mock Data
 // =====================

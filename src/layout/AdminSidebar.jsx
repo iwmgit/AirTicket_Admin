@@ -43,6 +43,10 @@ export default function AdminSidebar() {
         <NavLink to="/admin/staff" className={navItemClass}>
           Staff Management
         </NavLink>
+
+        <NavLink to="/admin/content" className={navItemClass}>
+          Content Management
+        </NavLink>
       </nav>
 
       <button
