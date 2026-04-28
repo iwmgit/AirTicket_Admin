@@ -8,6 +8,7 @@ import {
   uploadBookingTicket,
   getTicketStatus,
 } from "../../config/api";
+import Notification from "../../components/Notification";
 
 const BOOKING_STATUS_OPTIONS = [
   "PROCESSING",
@@ -24,7 +25,7 @@ export default function BookingManagement() {
   const [ticketFiles, setTicketFiles] = useState({});
   const [updatingBookingId, setUpdatingBookingId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [notification, setNotification] = useState({ message: "", type: "success" });
   const [uploadConfirmation, setUploadConfirmation] = useState(null);
   const [ticketStatusModal, setTicketStatusModal] = useState({
     isOpen: false,
@@ -47,7 +48,13 @@ export default function BookingManagement() {
         }
       } catch (err) {
         if (mounted) {
-          setError(err.message || "Failed to fetch bookings");
+          let backendMessage = err.response?.data?.message || err.response?.data?.detail || err.response?.data?.error;
+          // Clean up enum class references in error messages
+          if (backendMessage) {
+            backendMessage = backendMessage.replace(/\b\w+\./g, '');
+          }
+          const errorMessage = backendMessage || err.message || "Failed to fetch bookings";
+          setNotification({ message: errorMessage, type: "error" });
           setLoading(false);
         }
       }
@@ -70,8 +77,15 @@ export default function BookingManagement() {
           b.booking_id === bookingId ? { ...b, status: newStatus } : b
         )
       );
+      setNotification({ message: `Booking status updated to ${newStatus}`, type: "success" });
     } catch (err) {
-      alert("Failed to update booking status: " + (err.message || "Unknown error"));
+      let backendMessage = err.response?.data?.message || err.response?.data?.detail || err.response?.data?.error;
+      // Clean up enum class references in error messages (e.g., "BookingStatus.PROCESSING" -> "PROCESSING")
+      if (backendMessage) {
+        backendMessage = backendMessage.replace(/\b\w+\./g, '');
+      }
+      const errorMessage = backendMessage || err.message || "Unable to update booking status";
+      setNotification({ message: errorMessage, type: "error" });
     } finally {
       setUpdatingBookingId(null);
     }
@@ -89,8 +103,15 @@ export default function BookingManagement() {
             : b
         )
       );
+      setNotification({ message: `Payment status updated to ${newPaymentStatus}`, type: "success" });
     } catch (err) {
-      alert("Failed to update payment status: " + (err.message || "Unknown error"));
+      let backendMessage = err.response?.data?.message || err.response?.data?.detail || err.response?.data?.error;
+      // Clean up enum class references in error messages (e.g., "PaymentStatus.PENDING" -> "PENDING")
+      if (backendMessage) {
+        backendMessage = backendMessage.replace(/\b\w+\./g, '');
+      }
+      const errorMessage = backendMessage || err.message || "Unable to update payment status";
+      setNotification({ message: errorMessage, type: "error" });
     } finally {
       setUpdatingBookingId(null);
     }
@@ -105,7 +126,7 @@ export default function BookingManagement() {
     const file = ticketFiles[bookingId];
 
     if (!file) {
-      alert("Please select a ticket file");
+      setNotification({ message: "Please select a ticket file", type: "error" });
       return;
     }
 
@@ -154,8 +175,15 @@ export default function BookingManagement() {
 
       // Fetch and display ticket status
       await fetchAndShowTicketStatus(bookingId);
+      setNotification({ message: "Ticket uploaded successfully", type: "success" });
     } catch (err) {
-      alert("Failed to upload ticket: " + (err.message || "Unknown error"));
+      let backendMessage = err.response?.data?.message || err.response?.data?.detail || err.response?.data?.error;
+      // Clean up enum class references in error messages
+      if (backendMessage) {
+        backendMessage = backendMessage.replace(/\b\w+\./g, '');
+      }
+      const errorMessage = backendMessage || err.message || "Failed to upload ticket";
+      setNotification({ message: errorMessage, type: "error" });
       setUploadConfirmation(null);
     } finally {
       setUpdatingBookingId(null);
@@ -179,7 +207,13 @@ export default function BookingManagement() {
         loading: false,
       }));
     } catch (err) {
-      alert("Failed to fetch ticket status: " + (err.message || "Unknown error"));
+      let backendMessage = err.response?.data?.message || err.response?.data?.detail || err.response?.data?.error;
+      // Clean up enum class references in error messages
+      if (backendMessage) {
+        backendMessage = backendMessage.replace(/\b\w+\./g, '');
+      }
+      const errorMessage = backendMessage || err.message || "Failed to fetch ticket status";
+      setNotification({ message: errorMessage, type: "error" });
       setTicketStatusModal((prev) => ({
         ...prev,
         isOpen: false,
@@ -206,8 +240,15 @@ export default function BookingManagement() {
       await deleteBooking(bookingId);
       setBookings((prev) => prev.filter((b) => b.booking_id !== bookingId));
       setDeleteConfirmationId(null);
+      setNotification({ message: "Booking deleted successfully", type: "success" });
     } catch (err) {
-      alert("Failed to delete booking: " + (err.message || "Unknown error"));
+      let backendMessage = err.response?.data?.message || err.response?.data?.detail || err.response?.data?.error;
+      // Clean up enum class references in error messages
+      if (backendMessage) {
+        backendMessage = backendMessage.replace(/\b\w+\./g, '');
+      }
+      const errorMessage = backendMessage || err.message || "Unable to delete booking";
+      setNotification({ message: errorMessage, type: "error" });
     } finally {
       setUpdatingBookingId(null);
     }
@@ -308,12 +349,13 @@ export default function BookingManagement() {
     return <div className="p-6 text-center">Loading bookings...</div>;
   }
 
-  if (error) {
-    return <div className="p-6 text-red-600">Error: {error}</div>;
-  }
-
 return (
   <div>
+    <Notification
+      type={notification.type}
+      message={notification.message}
+      onClose={() => setNotification({ message: "", type: "success" })}
+    />
     <div className="bg-white border border-blue-200 rounded-2xl shadow-md overflow-hidden">
       {/* Filters */}
       <div className="p-5">

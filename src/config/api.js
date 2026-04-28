@@ -457,7 +457,7 @@ export const updateBackgroundImage = async (file) => {
 
 // Content Management - Banners
 export const getAllBanners = async () => {
-  const response = await apiClient.get("/content/banners");
+  const response = await apiClient.get("/content/banners/all");
   return response.data?.data ?? response.data;
 };
 
@@ -494,6 +494,11 @@ export const updateBanner = async (bannerId, updates) => {
       headers: { "Content-Type": "multipart/form-data" },
     }
   );
+  return response.data?.data ?? response.data;
+};
+
+export const deleteBanner = async (bannerId) => {
+  const response = await apiClient.delete(`/content/banners/${bannerId}/permanent`);
   return response.data?.data ?? response.data;
 };
 

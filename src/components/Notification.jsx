@@ -37,7 +37,7 @@ export default function Notification({ type = "success", message = "", onClose =
   const style = styles[type] || styles.success;
 
   return (
-    <div className={`fixed top-4 right-4 ${style.bg} border ${style.border} ${style.text} px-4 py-3 rounded-lg flex items-center gap-3 z-40 shadow-lg`}>
+    <div className={`fixed top-4 right-4 ${style.bg} border ${style.border} ${style.text} px-4 py-3 rounded-lg flex items-center gap-3 z-[9999] shadow-lg`}>
       <span className="font-bold text-lg">{style.icon}</span>
       <span className="font-medium">{message}</span>
       <button

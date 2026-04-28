@@ -78,11 +78,10 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800">
+    <div>
+      {/* Header */}
+      <div className="sticky top-0 bg-white border-b border-blue-200 px-6 py-4 flex justify-between items-center">
+          <h2 className="text-lg font-bold text-gray-800">
             {banner ? "Edit Banner" : "Create New Banner"}
           </h2>
           <button
@@ -98,7 +97,7 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -110,7 +109,7 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
               className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
                 errors.title
                   ? "border-red-500 focus:ring-red-500"
-                  : "border-gray-300 focus:ring-blue-500"
+                  : "border-blue-200 focus:ring-blue-400"
               }`}
               placeholder="Enter banner title"
               disabled={isLoading}
@@ -122,7 +121,7 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
 
           {/* Destination Code */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Destination Code <span className="text-red-500">*</span>
             </label>
             <select
@@ -133,7 +132,7 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
               className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
                 errors.destinationCode
                   ? "border-red-500 focus:ring-red-500"
-                  : "border-gray-300 focus:ring-blue-500"
+                  : "border-blue-200 focus:ring-blue-400"
               }`}
               disabled={isLoading}
             >
@@ -153,7 +152,7 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
 
           {/* Priority */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Priority (1-8) <span className="text-red-500">*</span>
             </label>
             <select
@@ -161,7 +160,7 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
               onChange={(e) =>
                 setFormData({ ...formData, priority: parseInt(e.target.value) })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               disabled={isLoading}
             >
               {PRIORITY_OPTIONS.map((p) => (
@@ -174,31 +173,34 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
 
           {/* Active Status (only for edit) */}
           {banner && (
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) =>
-                  setFormData({ ...formData, isActive: e.target.checked })
-                }
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
                 disabled={isLoading}
-              />
-              <label className="ml-2 text-sm text-gray-700">Active</label>
+                className={`w-full px-4 py-2 rounded-lg font-medium transition text-sm ${
+                  formData.isActive
+                    ? "bg-green-100 text-green-700 border border-green-200 hover:bg-green-200"
+                    : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
+                } disabled:opacity-50`}
+              >
+                {formData.isActive ? "✓ Active" : "✗ Inactive"}
+              </button>
             </div>
           )}
 
           {/* File Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Banner Image {!banner && <span className="text-red-500">*</span>}
             </label>
             <input
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${
-                errors.file ? "border border-red-500" : ""
+              className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 border border-blue-200 rounded-lg px-3 py-2 ${
+                errors.file ? "border-red-500" : ""
               }`}
               disabled={isLoading}
             />
@@ -212,38 +214,37 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
 
           {/* Preview */}
           {preview && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="space-y-2 p-4 border border-blue-200 rounded-lg bg-blue-50">
+              <label className="block text-sm font-medium text-gray-700">
                 Preview
               </label>
               <img
                 src={preview}
                 alt="Banner preview"
-                className="w-full h-32 object-cover rounded-lg border border-gray-300"
+                className="w-full h-32 object-cover rounded-lg border border-blue-200"
               />
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 border-t border-blue-200">
             <button
               type="button"
               onClick={onCancel}
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 transition"
+              className="flex-1 px-4 py-2 border border-blue-200 text-gray-700 rounded-lg font-medium hover:bg-blue-50 disabled:opacity-50 transition text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition text-sm"
             >
-              {isLoading ? "Saving..." : banner ? "Update Banner" : "Create Banner"}
+              {isLoading ? "..." : banner ? "Update Banner" : "Create Banner"}
             </button>
           </div>
         </form>
-      </div>
     </div>
   );
 }

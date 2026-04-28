@@ -18,10 +18,13 @@ const HEADER_CONFIG = {
     title: "Add Staff Member",
     subtitle: "Create a new staff account",
   },
-  "/admin/staff": {
-    title: "Staff Management",
-    subtitle: "Manage staff members",
-
+    "/admin/staff": {
+      title: "Staff Management",
+      subtitle: "Manage staff members",
+    },
+  "/admin/content": {
+    title: "Content Management",
+    subtitle: "Manage homepage background and banner images",
   },
 };
 

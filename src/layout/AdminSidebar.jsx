@@ -1,7 +1,7 @@
 import { NavLink } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router";
-import Logo from "../assets/Logo.png";
+import Logo from "../assets/Logo_1.jpg";
 
 const navItemClass = ({ isActive }) =>
   `block px-4 py-3 rounded text-sm font-medium ${
