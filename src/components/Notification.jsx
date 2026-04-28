@@ -6,7 +6,7 @@ export default function Notification({ type = "success", message = "", onClose =
 
     const timer = setTimeout(() => {
       onClose();
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [message, onClose]);

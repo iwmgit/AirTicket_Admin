@@ -112,6 +112,29 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Utility function to transform image URLs from API responses
+export const transformImageUrl = (imageUrl) => {
+  if (!imageUrl) return null;
+  
+  try {
+    // Extract the file path from the URL (e.g., /files/public/content/filename.jpg)
+    const url = new URL(imageUrl);
+    const filePath = url.pathname; // Gets the path part
+    
+    // Get the base domain from API_BASE_URL
+    // e.g., https://flyqm.com/api -> https://flyqm.com
+    const apiUrl = new URL(API_BASE_URL);
+    const baseDomain = `${apiUrl.protocol}//${apiUrl.hostname}`;
+    
+    // Construct the correct image URL
+    const transformedUrl = `${baseDomain}${filePath}`;
+    
+    return transformedUrl;
+  } catch (error) {
+    return imageUrl; // Fallback to original URL if transformation fails
+  }
+};
+
 export const loginUser = async (email, password) => {
   const formData = new URLSearchParams();
   formData.append("username", email);

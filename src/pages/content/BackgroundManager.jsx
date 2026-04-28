@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getBackgroundImage, updateBackgroundImage } from "../../config/api";
+import { getBackgroundImage, updateBackgroundImage, transformImageUrl } from "../../config/api";
 
 export default function BackgroundManager() {
   const [backgroundImage, setBackgroundImage] = useState(null);
@@ -91,7 +91,7 @@ export default function BackgroundManager() {
           {backgroundImage?.image_url ? (
             <div className="space-y-3">
               <img
-                src={backgroundImage.image_url}
+                src={transformImageUrl(backgroundImage.image_url)}
                 alt="Background"
                 className="w-full h-48 object-cover rounded-lg border border-gray-300"
               />

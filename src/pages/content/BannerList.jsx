@@ -4,6 +4,7 @@ import {
   createBanner,
   updateBanner,
   deactivateBanner,
+  transformImageUrl,
 } from "../../config/api";
 import BannerForm from "./BannerForm";
 
@@ -179,7 +180,7 @@ export default function BannerList() {
                   {/* Image */}
                   <td className="px-4 py-3">
                     <img
-                      src={banner.image_url}
+                      src={transformImageUrl(banner.image_url)}
                       alt={banner.title}
                       className="w-16 h-16 object-cover rounded"
                     />

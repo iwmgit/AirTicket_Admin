@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { transformImageUrl } from "../../config/api";
 
 const PRIORITY_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8];
 const DESTINATION_CODES = ["RGN", "MDL", "NYT", "BKK", "CNX", "DAD"]; // Add more as needed
@@ -24,7 +25,7 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
         isActive: banner.is_active !== false,
         file: null,
       });
-      setPreview(banner.image_url || null);
+      setPreview(transformImageUrl(banner.image_url) || null);
     }
   }, [banner]);
 
