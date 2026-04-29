@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { createFlightOverride, getPricingConfig, updatePricingConfig } from "../../config/api";
+import { createFlightOverride, getPricingConfig } from "../../config/api";
 import Notification from "../../components/Notification";
 
 // Convert minutes to hours (supports decimal values)
@@ -24,7 +24,7 @@ export default function FlightForm() {
   
   const [formData, setFormData] = useState({
     ...flightData,
-    overridePrice: overrideData?.base_price_usd || flightData?.flight_snapshot?.base_price_usd || "",
+    overridePrice: overrideData?.base_price_usd || flightData?.flight_snapshot?.final_price_usd || "",
     durationHours: 1,
     currency: "USD",
     finalPrice: "",
@@ -35,9 +35,6 @@ export default function FlightForm() {
   const [currentMarkup, setCurrentMarkup] = useState(null);
   const [markupLoading, setMarkupLoading] = useState(true);
   const [notification, setNotification] = useState({ message: "", type: "success" });
-  const [openMarkupModal, setOpenMarkupModal] = useState(false);
-  const [newMarkup, setNewMarkup] = useState("");
-  const [isUpdatingMarkup, setIsUpdatingMarkup] = useState(false);
 
   // Fetch pricing config on mount
   useEffect(() => {
@@ -45,7 +42,6 @@ export default function FlightForm() {
       try {
         const pricingData = await getPricingConfig();
         setCurrentMarkup(pricingData?.global_markup_percentage || 0);
-        setNewMarkup(String(pricingData?.global_markup_percentage || ""));
       } catch (err) {
         console.error("Failed to fetch pricing config:", err);
       } finally {
@@ -55,17 +51,15 @@ export default function FlightForm() {
     fetchPricingConfig();
   }, []);
 
-  // Recalculate final price when override price or markup changes
+  // Override price directly becomes the final price (no markup applied)
   useEffect(() => {
-    if (formData.overridePrice && currentMarkup !== null) {
-      const markupMultiplier = 1 + (parseFloat(currentMarkup) / 100);
-      const newFinalPrice = parseFloat(formData.overridePrice) * markupMultiplier;
+    if (formData.overridePrice) {
       setFormData((prev) => ({
         ...prev,
-        finalPrice: newFinalPrice.toFixed(2),
+        finalPrice: parseFloat(formData.overridePrice).toFixed(2),
       }));
     }
-  }, [formData.overridePrice, currentMarkup]);
+  }, [formData.overridePrice]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -84,26 +78,6 @@ export default function FlightForm() {
         ...prev,
         [name]: value,
       }));
-    }
-  };
-
-  const handleUpdateMarkup = async () => {
-    try {
-      setIsUpdatingMarkup(true);
-      await updatePricingConfig(newMarkup);
-      
-      // Refresh the pricing config - this will trigger the useEffect to recalculate final price
-      const pricingData = await getPricingConfig();
-      const updatedMarkup = pricingData?.global_markup_percentage || 0;
-      setCurrentMarkup(updatedMarkup);
-      setNewMarkup(String(updatedMarkup));
-      
-      setNotification({ message: "Global markup updated successfully!", type: "success" });
-      setOpenMarkupModal(false);
-    } catch (err) {
-      setNotification({ message: "Failed to update markup: " + err.message, type: "error" });
-    } finally {
-      setIsUpdatingMarkup(false);
     }
   };
 
@@ -154,7 +128,7 @@ export default function FlightForm() {
             {mode === "update" ? "Edit Override Flight" : "Create Flight Override"}
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {mode === "update" ? "Modify the override price" : "Review flight details and set override price"}
+            {mode === "update" ? "Modify the override price" : "Set a temporary override price that will be active for a specified duration, then revert to the normal price"}
           </p>
         </div>
 
@@ -241,7 +215,7 @@ export default function FlightForm() {
                 <div>
                   <label className="text-xs font-medium text-gray-600">Final Price</label>
                   <p className="text-sm font-medium text-gray-900 mt-1">
-                    ${formData.finalPrice || formData.overridePrice || snapshot?.final_price_usd || "0"}
+                    ${snapshot?.final_price_usd || "0"}
                   </p>
                 </div>
                 <div>
@@ -251,9 +225,9 @@ export default function FlightForm() {
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-600">Estimated Price Max (USD)</label>
+                  <label className="text-xs font-medium text-gray-600">Estimated Price(USD)</label>
                   <p className="text-sm font-medium text-gray-900 mt-1">
-                    ${snapshot?.price_estimate_max_usd || "0"} - ${snapshot?.price_estimate_max_usd || "0"}
+                    ${snapshot?.price_estimate_min_usd || "0"} - ${snapshot?.price_estimate_max_usd || "0"}
                   </p>
                 </div>
               </div>
@@ -283,10 +257,10 @@ export default function FlightForm() {
                   <p className="text-xs text-gray-500 mt-1">From search result</p>
                 </div>
 
-                {/* Override Price - Editable */}
+                {/* Override Price - Editable (This will replace the current final price) */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-2">
-                    Override Price <span className="text-red-600">*</span>
+                    New Override Price <span className="text-red-600">*</span>
                   </label>
                   <div className="relative">
                     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -303,13 +277,13 @@ export default function FlightForm() {
                       placeholder="Enter new price"
                     />
                   </div>
-                  <p className="text-xs text-blue-600 mt-1">Numbers only</p>
+                  <p className="text-xs text-blue-600 mt-1">Replaces current price for duration</p>
                 </div>
 
-                {/* Final Price - Read Only (Backend Calculated) */}
+                {/* Current Final Price - Read Only (From Backend) */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-2">
-                    Final Price
+                    Current Final Price
                   </label>
                   <div className="relative">
                     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -317,43 +291,31 @@ export default function FlightForm() {
                     </span>
                     <input
                       type="text"
-                      value={formData.finalPrice || formData.overridePrice || "0"}
+                      value={snapshot?.final_price_usd || "0"}
                       disabled
                       className="w-full px-4 py-2 pl-7 border border-green-300 rounded-lg bg-green-50 text-green-700 font-semibold text-sm"
                       readOnly
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Backend calculated</p>
+                  <p className="text-xs text-gray-500 mt-1">Active now</p>
                 </div>
 
-                {/* Current Markup % */}
+                {/* Global Markup % - Display Only */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-2">
                     Global Markup %
                   </label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        %
-                      </span>
-                      <input
-                        type="text"
-                        value={markupLoading ? "Loading..." : currentMarkup || "0"}
-                        disabled
-                        className="w-full px-4 py-2 pr-7 border border-gray-300 rounded-lg bg-blue-50 text-blue-700 font-semibold text-sm"
-                        readOnly
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpenMarkupModal(true);
-                        setNewMarkup(String(currentMarkup || ""));
-                      }}
-                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
-                    >
-                      Update
-                    </button>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      %
+                    </span>
+                    <input
+                      type="text"
+                      value={markupLoading ? "Loading..." : currentMarkup || "0"}
+                      disabled
+                      className="w-full px-4 py-2 pr-7 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 font-semibold text-sm"
+                      readOnly
+                    />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">System config</p>
                 </div>
@@ -382,24 +344,6 @@ export default function FlightForm() {
                   </p>
                 </div>
               )}
-
-              {/* Price & Duration Info */}
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900 space-y-2">
-                {snapshot?.base_price_usd && formData.overridePrice ? (
-                  <>
-                    {parseFloat(formData.overridePrice) > snapshot.base_price_usd ? (
-                      <p> Price will increase by ${(parseFloat(formData.overridePrice) - snapshot.base_price_usd).toFixed(2)}</p>
-                    ) : parseFloat(formData.overridePrice) < snapshot.base_price_usd ? (
-                      <p> Price will decrease by ${(snapshot.base_price_usd - parseFloat(formData.overridePrice)).toFixed(2)}</p>
-                    ) : (
-                      <p> Price unchanged</p>
-                    )}
-                  </>
-                ) : null}
-                {mode === "create" && formData.durationHours && (
-                  <p> Override will be active for <span className="font-semibold">{formData.durationHours} minutes ({convertMinutesToHours(formData.durationHours).toFixed(2)} hours)</span>. After this period, the price will revert to the normal search price.</p>
-                )}
-              </div>
             </div>
 
             {/* Buttons */}
@@ -422,78 +366,6 @@ export default function FlightForm() {
           </form>
         </div>
       </div>
-
-      {/* ========================= Markup Update Modal ========================= */}
-      {openMarkupModal && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
-          onClick={() => setOpenMarkupModal(false)}
-        >
-          <div
-            className="bg-white w-full max-w-md rounded-lg shadow-lg p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">Update Global Markup</h2>
-              <button onClick={() => setOpenMarkupModal(false)} className="text-2xl">×</button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  New Markup Percentage
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    %
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={newMarkup}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (/^\d*\.?\d*$/.test(value)) {
-                        setNewMarkup(value);
-                      }
-                    }}
-                    className="w-full px-4 py-2 pr-7 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    placeholder="Enter new percentage"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Current: {currentMarkup}%</p>
-              </div>
-
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
-                {newMarkup && newMarkup !== String(currentMarkup) ? (
-                  <p>Markup will change from {currentMarkup}% to {newMarkup}%</p>
-                ) : (
-                  <p>Enter a different value to update</p>
-                )}
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setOpenMarkupModal(false)}
-                className="px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateMarkup}
-                disabled={isUpdatingMarkup || !newMarkup}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition disabled:bg-gray-400"
-              >
-                {isUpdatingMarkup ? "Updating..." : "Update"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

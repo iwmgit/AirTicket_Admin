@@ -58,11 +58,9 @@ export function AuthProvider({ children }) {
       setError("");
 
       const data = await createStaffUser(name, email, password);
-      console.log("API Response for createStaff:", data);
       
       // Staff creation doesn't require a token, just check if we got a response
       if (data && (data.id || data.user || data.success !== false)) {
-        console.log("Staff created successfully");
         return { success: true, user: data };
       } else {
         throw new Error(data?.error || "Failed to create staff account");

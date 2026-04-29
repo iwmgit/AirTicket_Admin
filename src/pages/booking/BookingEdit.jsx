@@ -8,10 +8,12 @@ import {
   getTicketStatus,
 } from "../../config/api";
 import Notification from "../../components/Notification";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function BookingEdit() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [booking, setBooking] = useState(null);
   const [ticketFile, setTicketFile] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
@@ -21,7 +23,7 @@ export default function BookingEdit() {
   const [notification, setNotification] = useState({ message: "", type: "success" });
   const [ticketStatus, setTicketStatus] = useState(null);
 
-  const adminEmail = "admin@example.com";
+  const adminEmail = user?.email || user?.name || "unknown";
 
   useEffect(() => {
     let mounted = true;
@@ -57,13 +59,40 @@ export default function BookingEdit() {
     };
   }, [bookingId]);
 
+  const ALLOWED_TICKET_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+  const MAX_FILE_SIZE_MB = 10;
+
+  const validateTicketFile = (file) => {
+    if (!ALLOWED_TICKET_TYPES.includes(file.type)) {
+      setNotification({ message: "Only PDF, JPG, PNG, and WEBP files are allowed.", type: "error" });
+      return false;
+    }
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setNotification({ message: `File size must not exceed ${MAX_FILE_SIZE_MB}MB.`, type: "error" });
+      return false;
+    }
+    return true;
+  };
+
   const handleTicketFileChange = (e) => {
-    setTicketFile(e.target.files?.[0] || null);
+    const file = e.target.files?.[0] || null;
+    if (file && !validateTicketFile(file)) {
+      e.target.value = "";
+      setTicketFile(null);
+      return;
+    }
+    setTicketFile(file);
     setNotification({ message: "", type: "success" });
   };
 
   const handleUploadFileChange = (e) => {
-    setUploadFile(e.target.files?.[0] || null);
+    const file = e.target.files?.[0] || null;
+    if (file && !validateTicketFile(file)) {
+      e.target.value = "";
+      setUploadFile(null);
+      return;
+    }
+    setUploadFile(file);
     setNotification({ message: "", type: "success" });
   };
 

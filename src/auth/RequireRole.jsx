@@ -18,7 +18,9 @@ export default function RequireRole({ children, role }) {
             <p className="text-gray-600">
               You do not have permission to access this page.
             </p>
-            <p className="text-sm text-gray-500 mt-2">Required role: {role}</p>
+            <p className="text-sm text-gray-500 mt-2">
+              Contact your administrator if you believe this is an error.
+            </p>
           </div>
         </div>
       )}

@@ -1,28 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import {
-  searchFlights,
-  getExchangeRate,
-  updateExchangeRate,
-  getPricingConfig,    
-  updatePricingConfig 
-} from "../../config/api";
+import { searchFlights } from "../../config/api";
 import Notification from "../../components/Notification";
+import AdminFlightSearchForm from "../../components/AdminFlightSearchForm";
+import FlightConfigPanel from "../../components/FlightConfigPanel";
 
 export default function FlightManagement() {
   const navigate = useNavigate();
-  const { hasRole } = useAuth(); 
-
-  // Modal State
-  const [openCurrencyModal, setOpenCurrencyModal] = useState(false);
-  const [usdToMmkRate, setUsdToMmkRate] = useState("");
-  const [currentRate, setCurrentRate] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [openPricingModal, setOpenPricingModal] = useState(false);
-  const [globalMarkup, setGlobalMarkup] = useState("");
-  const [currentMarkup, setCurrentMarkup] = useState(null);
-  const [pricingUpdatedAt, setPricingUpdatedAt] = useState(null);
+  const { hasRole } = useAuth();
 
   // Search State
   const [searchParams, setSearchParams] = useState({
@@ -37,36 +23,8 @@ export default function FlightManagement() {
   const [searchError, setSearchError] = useState(null);
   const [notification, setNotification] = useState({ message: "", type: "success" });
 
-  useEffect(() => {
-    const fetchRate = async () => {
-      try {
-        const rateData = await getExchangeRate();
-        setCurrentRate(rateData?.usd_to_mmk || 0);
-        setLastUpdated(rateData?.created_at);
-        setUsdToMmkRate(String(rateData?.usd_to_mmk || ""));
-      } catch (err) {
-        console.error("Failed to fetch exchange rate:", err);
-      }
-    };
-    fetchRate();
-
-    const fetchPricingConfig = async () => {
-      try {
-        const pricingData = await getPricingConfig();
-        setCurrentMarkup(pricingData?.global_markup_percentage || 0);
-        setPricingUpdatedAt(pricingData?.updated_at);
-        setGlobalMarkup(String(pricingData?.global_markup_percentage || ""));
-      } catch (err) {
-        console.error("Failed to fetch pricing config:", err);
-      }
-    };
-    fetchPricingConfig();
-  }, []);
-
   // Helpers
   const transformFlightData = (flights) => {
-    console.log("Raw API Response:", flights);
-
     return flights.map((f) => {
       // ONE_WAY flight only
       return {
@@ -103,6 +61,7 @@ export default function FlightManagement() {
     });
   };
 
+  // Helpers
   const formatDuration = (minutes) => {
     if (!minutes) return "N/A";
 
@@ -110,29 +69,6 @@ export default function FlightManagement() {
     const mins = minutes % 60;
 
     return `${hours}h ${mins}m`;
-  };
-
-  const formatDisplayDate = (dateString) => {
-    if (!dateString) return "";
-    try {
-      // Handle both ISO timestamps and date-only strings
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "";
-      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    } catch (e) {
-      return "";
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "N/A";
-      return date.toLocaleString();
-    } catch (e) {
-      return "N/A";
-    }
   };
 
   // Handlers
@@ -160,7 +96,6 @@ export default function FlightManagement() {
       const transformedResults = transformFlightData(results);
 
       setSearchResults(transformedResults);
-      console.log("Transformed Search Results:", transformedResults);
       setHasSearched(true);
     } catch (err) {
       setSearchError(err.message);
@@ -188,80 +123,6 @@ export default function FlightManagement() {
     }));
   };
 
-  const handleUpdateRate = async () => {
-    try {
-      await updateExchangeRate(usdToMmkRate);
-
-      // Refresh the exchange rate after successful update
-      const rateData = await getExchangeRate();
-      setCurrentRate(rateData?.usd_to_mmk || 0);
-      setLastUpdated(rateData?.created_at);
-      setUsdToMmkRate(String(rateData?.usd_to_mmk || ""));
-
-      // Recalculate prices with new rate
-      const updatedResults = searchResults.map(flight => ({
-        ...flight,
-        final_price_mmk: flight.final_price_usd * parseFloat(rateData?.usd_to_mmk || 1),
-        flight_snapshot: {
-          ...flight.flight_snapshot,
-          final_price_mmk: flight.final_price_usd * parseFloat(rateData?.usd_to_mmk || 1),
-        },
-      }));
-
-      setSearchResults(updatedResults);
-      setNotification({ message: "Exchange rate updated successfully!", type: "success" });
-      setOpenCurrencyModal(false)
-    } catch (err) {
-      setNotification({ message: "Failed to update exchange rate: " + err.message, type: "error" });
-    }
-  };
-
-  const handleUpdatePricingConfig = async () => {
-    try {
-      await updatePricingConfig(globalMarkup);
-      
-      // Refresh the pricing config after successful update
-      const pricingData = await getPricingConfig();
-      setCurrentMarkup(pricingData?.global_markup_percentage || 0);
-      setPricingUpdatedAt(pricingData?.updated_at);
-      setGlobalMarkup(String(pricingData?.global_markup_percentage || ""));
-      
-      // Recalculate prices with new markup
-      const updatedResults = searchResults.map(flight => {
-        const markupMultiplier = 1 + (parseFloat(pricingData?.global_markup_percentage || 0) / 100);
-        return {
-          ...flight,
-          final_price_usd: flight.flight_snapshot.base_price_usd * markupMultiplier,
-          flight_snapshot: {
-            ...flight.flight_snapshot,
-            final_price_usd: flight.flight_snapshot.base_price_usd * markupMultiplier,
-          },
-        };
-      });
-
-      setSearchResults(updatedResults);
-      setNotification({ message: "Pricing configuration updated successfully!", type: "success" });
-      setOpenPricingModal(false)
-    } catch (err) {
-      setNotification({ message: "Failed to update pricing config: " + err.message, type: "error" });
-    }
-  };
-
-  const CalendarIcon = (
-  <svg
-    className="w-5 h-5"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-  >
-    <rect x="3" y="4" width="18" height="18" rx="2" />
-    <line x1="16" y1="2" x2="16" y2="6" />
-    <line x1="8" y1="2" x2="8" y2="6" />
-    <line x1="3" y1="10" x2="21" y2="10" />
-  </svg>
-  );
-
   // Render
   return (
     <div>
@@ -275,30 +136,9 @@ export default function FlightManagement() {
         {/* Header */}
         <div className="p-2 border-b border-blue-200">
           <div className="flex items-center justify-end">
-            <div className="flex gap-3">
-                <>
-                {hasRole("SUPER_ADMIN") && (
-                  <button
-                    onClick={() => navigate("/admin/overrides")}
-                    className="border border-blue-200 px-4 py-2 text-sm rounded-lg bg-[#bedbff] hover:bg-blue-50 font-medium transition"
-                  >
-                    View Overrides
-                  </button>
-                )}
-                  <button
-                    onClick={() => setOpenCurrencyModal(true)}
-                    className="border border-blue-200 px-4 py-2 text-sm rounded-lg bg-[#bedbff] hover:bg-blue-50 font-medium transition"
-                  >
-                    Currency Exchange
-                  </button>
-                  <button
-                    onClick={() => setOpenPricingModal(true)}
-                    className="border border-blue-200 px-4 py-2 text-sm rounded-lg bg-[#bedbff] hover:bg-blue-50 font-medium transition"
-                  >
-                    Pricing Configuration
-                  </button>
-                </>
-            </div>
+            <FlightConfigPanel
+              onNotify={setNotification}
+            />
           </div>
         </div>
 
@@ -311,91 +151,22 @@ export default function FlightManagement() {
             </div>
           )}
 
-          {/* Search Inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-            {/* Origin */}
-            <div>
-              <label className="block text-sm font-medium text-slate-500 mb-3">
-                Origin
-              </label>
-              <input
-                type="text"
-                className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="e.g., RGN, BKK"
-                value={searchParams.origin}
-                onChange={(e) => handleInputChange("origin", e.target.value)}
+          {/* Admin Flight Search Form */}
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <AdminFlightSearchForm
+                searchParams={searchParams}
+                onSearch={handleSearch}
+                onInputChange={handleInputChange}
+                isSearching={isSearching}
               />
             </div>
-
-            {/* Destination */}
-            <div>
-              <label className="block text-sm font-medium text-slate-500 mb-3">
-                Destination
-              </label>
-              <input
-                type="text"
-                className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="e.g., BKK, SIN"
-                value={searchParams.destination}
-                onChange={(e) => handleInputChange("destination", e.target.value)}
-              />
-            </div>
-
-            {/* Departure Date */}
-            <div >
-              <label className="block text-sm font-medium text-slate-500 mb-3">
-                Departure date
-              </label>
-              <div className="relative">
-                <div className="h-10 rounded-2xl border border-gray-200 bg-white flex items-center px-4">
-                  <span className="mr-3 text-gray-400">{CalendarIcon}</span>
-                  <input
-                    type="text"
-                    readOnly
-                    value={formatDisplayDate(searchParams.departureDate)}
-                    placeholder="Select date"
-                    onClick={() => {
-                      const el = document.getElementById("departure-date");
-                      if (el?.showPicker) {
-                        el.showPicker();
-                      } else if (el) {
-                        el.click();
-                      }
-                    }}
-                    className="w-full bg-transparent outline-none text-base text-slate-700 placeholder:text-gray-400 cursor-pointer"
-                  />
-                </div>
-
-                <input
-                  id="departure-date"
-                  type="date"
-                  value={searchParams.departureDate}
-                  onChange={(e) =>
-                    handleInputChange("departureDate", e.target.value)
-                  }
-                  className="absolute inset-0 opacity-0 pointer-events-none"
-                  tabIndex={-1}
-                />
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={handleClearAll}
-                className="border border-blue-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition"
-              >
-                Clear All
-              </button>
-
-              <button
-                onClick={handleSearch}
-                disabled={isSearching}
-                className="bg-[#bedbff] hover:bg-blue-700 text-black text-sm px-4 py-2 rounded-lg font-medium disabled:bg-gray-400 transition"
-              >
-                {isSearching ? "Searching..." : "Search Flights"}
-              </button>
-            </div>
+            <button
+              onClick={handleClearAll}
+              className="border border-blue-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition h-10"
+            >
+              Clear All
+            </button>
           </div>
         </div>
 
@@ -560,164 +331,6 @@ export default function FlightManagement() {
           </>
         )}
       </div>
-
-      {/* ========================= Currency Modal ========================= */}
-      {openCurrencyModal && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
-          onClick={() => setOpenCurrencyModal(false)}
-        >
-          <div
-            className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">Currency Exchange Rate</h2>
-              <button onClick={() => setOpenCurrencyModal(false)} className="text-2xl">×</button>
-            </div>
-
-            {/* Rate Table */}
-            <div className="mb-6 overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-blue-50 border border-blue-200">
-                    <th className="border border-blue-200 p-3 text-left font-semibold">Currency</th>
-                    <th className="border border-blue-200 p-3 text-left font-semibold">Current Rate (to MMK)</th>
-                    {hasRole("SUPER_ADMIN") && (
-                      <th className="border border-blue-200 p-3 text-left font-semibold">New Rate</th>
-                    )}
-                    <th className="border border-blue-200 p-3 text-left font-semibold">Last Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border border-blue-200 hover:bg-blue-50">
-                    <td className="border border-blue-200 p-3">USD</td>
-                    <td className="border border-blue-200 p-3 font-medium">{currentRate || 0}</td>
-                    {hasRole("SUPER_ADMIN") && (
-                      <td className="border border-blue-200 p-3">
-                        <input
-                          type="text"
-                          value={usdToMmkRate}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (/^\d*\.?\d*$/.test(value)) {
-                              setUsdToMmkRate(value);
-                            }
-                          }}
-                          className="border border-blue-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          placeholder="Enter new rate"
-                        />
-                      </td>
-                    )}
-                    <td className="border border-blue-200 p-3 text-sm text-gray-600">
-                      {formatDate(lastUpdated)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setOpenCurrencyModal(false)}
-                className="px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium transition"
-              >
-                Cancel
-              </button>
-
-              {hasRole("SUPER_ADMIN") && (
-                <button
-                  onClick={handleUpdateRate}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
-                >
-                  Update Rate
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================= Pricing Configuration Modal ========================= */}
-      {openPricingModal && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
-          onClick={() => setOpenPricingModal(false)}
-        >
-          <div
-            className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">Pricing Configuration</h2>
-              <button onClick={() => setOpenPricingModal(false)} className="text-2xl">×</button>
-            </div>
-
-            {/* Config Table */}
-            <div className="mb-6 overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-blue-50 border border-blue-200">
-                    <th className="border border-blue-200 p-3 text-left font-semibold">Configuration</th>
-                    <th className="border border-blue-200 p-3 text-left font-semibold">Current Value</th>
-                    {hasRole("SUPER_ADMIN") && (
-                      <th className="border border-blue-200 p-3 text-left font-semibold">New Value</th>
-                    )}
-                    <th className="border border-blue-200 p-3 text-left font-semibold">Last Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border border-blue-200 hover:bg-blue-50">
-                    <td className="border border-blue-200 p-3 font-medium">Global Markup Percentage</td>
-                    <td className="border border-blue-200 p-3 font-medium">{currentMarkup || 0}%</td>
-                    {hasRole("SUPER_ADMIN") && (
-                      <td className="border border-blue-200 p-3">
-                        <input
-                          type="text"
-                          value={globalMarkup}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (/^\d*\.?\d*$/.test(value)) {
-                              setGlobalMarkup(value);
-                            }
-                          }}
-                          className="border border-blue-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          placeholder="Enter markup percentage"
-                        />
-                      </td>
-                    )}
-                    <td className="border border-blue-200 p-3 text-sm text-gray-600">
-                      {formatDate(pricingUpdatedAt)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setOpenPricingModal(false)}
-                className="px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium transition"
-              >
-                Cancel
-              </button>
-
-              {hasRole("SUPER_ADMIN") && (
-                <button
-                  onClick={handleUpdatePricingConfig}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
-                >
-                  Update Configuration
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

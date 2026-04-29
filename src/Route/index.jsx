@@ -66,11 +66,19 @@ export const router = createBrowserRouter([
       },
       {
         path: "users/:id/edit",
-        element:<UserEdit /> ,
+        element: (
+          <RequireRole role="SUPER_ADMIN">
+            <UserEdit />
+          </RequireRole>
+        ),
       },
       {
         path: "users/:id",
-        element: <UserView />,
+        element: (
+          <RequireRole role="SUPER_ADMIN">
+            <UserView />
+          </RequireRole>
+        ),
       },
       {
         path: "users",

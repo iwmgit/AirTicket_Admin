@@ -37,13 +37,34 @@ export default function StaffFormModal({ onClose, onSuccess, onNotify = () => {}
       return false;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      setError("Please enter a valid email address");
+      return false;
+    }
+
     if (!formData.password.trim()) {
       setError("Password is required");
       return false;
     }
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return false;
+    }
+
+    if (!/[A-Z]/.test(formData.password)) {
+      setError("Password must contain at least one uppercase letter");
+      return false;
+    }
+
+    if (!/[0-9]/.test(formData.password)) {
+      setError("Password must contain at least one number");
+      return false;
+    }
+
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(formData.password)) {
+      setError("Password must contain at least one special character");
       return false;
     }
 
@@ -81,8 +102,6 @@ export default function StaffFormModal({ onClose, onSuccess, onNotify = () => {}
         formData.email,
         formData.password
       );
-
-      console.log("Create Staff Response:", response);
 
       if (response?.success === true) {
         resetForm();

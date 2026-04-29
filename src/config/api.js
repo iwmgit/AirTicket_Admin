@@ -1,96 +1,3 @@
-const mockUsers = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    email: "sarah.johnson@airline.com",
-    phone: "+1 (555) 123-4567",
-    registration: "Jan 15, 2024",
-    lastActive: "2 hours ago",
-    status: "Active",
-    bookingStats: {
-      total: 12,
-      totalSpent: 4580,
-      cancelled: 2,
-      avgBooking: 382,
-    },
-  },
-  {
-    id: 2,
-    name: "Michael Chen",
-    email: "michael.chen@airline.com",
-    phone: "+66 81 234 5678",
-    registration: "Feb 3, 2024",
-    lastActive: "5 minutes ago",
-    status: "Active",
-    bookingStats: { total: 8, totalSpent: 3120, cancelled: 1, avgBooking: 390 },
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    email: "emily.r@airline.com",
-    phone: "+1 (555) 987-6543",
-    registration: "Mar 12, 2024",
-    lastActive: "1 day ago",
-    status: "Active",
-    bookingStats: {
-      total: 15,
-      totalSpent: 7250,
-      cancelled: 3,
-      avgBooking: 483,
-    },
-  },
-  {
-    id: 4,
-    name: "David Park",
-    email: "david.park@airline.com",
-    phone: "+82 10 1234 5678",
-    registration: "Apr 8, 2024",
-    lastActive: "3 hours ago",
-    status: "Active",
-    bookingStats: { total: 5, totalSpent: 2100, cancelled: 0, avgBooking: 420 },
-  },
-  {
-    id: 5,
-    name: "Jessica Williams",
-    email: "jessica.williams@airline.com",
-    phone: "+1 (555) 456-7890",
-    registration: "May 20, 2024",
-    lastActive: "1 hour ago",
-    status: "Active",
-    bookingStats: { total: 3, totalSpent: 1200, cancelled: 0, avgBooking: 400 },
-  },
-  {
-    id: 6,
-    name: "Robert Taylor",
-    email: "robert.taylor@airline.com",
-    phone: "+1 (555) 789-0123",
-    registration: "Jun 5, 2024",
-    lastActive: "2 weeks ago",
-    status: "Suspended",
-    bookingStats: { total: 7, totalSpent: 3200, cancelled: 1, avgBooking: 457 },
-  },
-  {
-    id: 7,
-    name: "Amanda Lee",
-    email: "amanda.lee@airline.com",
-    phone: "+1 (555) 456-7890",
-    registration: "Jul 18, 2024",
-    lastActive: "30 minutes ago",
-    status: "Active",
-    bookingStats: { total: 4, totalSpent: 1800, cancelled: 0, avgBooking: 450 },
-  },
-  {
-    id: 8,
-    name: "James Brown",
-    email: "james.brown@airline.com",
-    phone: "+1 (555) 234-5678",
-    registration: "Aug 2, 2024",
-    lastActive: "6 hours ago",
-    status: "Active",
-    bookingStats: { total: 6, totalSpent: 2700, cancelled: 0, avgBooking: 450 },
-  },
-];
-
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -111,6 +18,19 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      window.location.href = "/signin";
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Utility function to transform image URLs from API responses
 export const transformImageUrl = (imageUrl) => {
@@ -508,7 +428,3 @@ export const deactivateBanner = async (bannerId) => {
 };
 
 
-// Export Mock Data
-// =====================
-
-export { mockUsers };
