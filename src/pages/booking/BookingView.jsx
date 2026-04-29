@@ -2,10 +2,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getBookingById, deleteBooking, getSecureTicket, getBookingAudit, getTicketStatus } from "../../config/api";
 import Notification from "../../components/Notification";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function BookingView() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
+  const { hasRole } = useAuth(); 
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -260,6 +262,7 @@ export default function BookingView() {
           <section className="border-t border-blue-200 pt-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-800">Payment & Status</h2>
+              {hasRole("SUPER_ADMIN") && (
               <button
                 onClick={handleViewAudit}
                 disabled={auditLoading}
@@ -267,6 +270,7 @@ export default function BookingView() {
               >
                 {auditLoading ? "Loading..." : "View Audit"}
               </button>
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <DetailItem label="Payment Status" value={booking.payment_status} />
@@ -478,12 +482,14 @@ export default function BookingView() {
 
               {/* Modal Footer */}
               <div className="sticky bottom-0 p-5 border-t border-blue-200 bg-blue-50 flex justify-end">
+
                 <button
                   onClick={() => setShowAuditModal(false)}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-medium"
                 >
                   Close
                 </button>
+
               </div>
             </div>
           </div>

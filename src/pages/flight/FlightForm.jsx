@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { createFlightOverride, getPricingConfig } from "../../config/api";
+import { createFlightOverride, getPricingConfig, updatePricingConfig } from "../../config/api";
 import Notification from "../../components/Notification";
 
 // Convert minutes to hours (supports decimal values)
@@ -27,6 +27,7 @@ export default function FlightForm() {
     overridePrice: overrideData?.base_price_usd || flightData?.flight_snapshot?.base_price_usd || "",
     durationHours: 1,
     currency: "USD",
+    finalPrice: "",
   });
   
   const [loading, setLoading] = useState(false);
@@ -34,6 +35,9 @@ export default function FlightForm() {
   const [currentMarkup, setCurrentMarkup] = useState(null);
   const [markupLoading, setMarkupLoading] = useState(true);
   const [notification, setNotification] = useState({ message: "", type: "success" });
+  const [openMarkupModal, setOpenMarkupModal] = useState(false);
+  const [newMarkup, setNewMarkup] = useState("");
+  const [isUpdatingMarkup, setIsUpdatingMarkup] = useState(false);
 
   // Fetch pricing config on mount
   useEffect(() => {
@@ -41,6 +45,7 @@ export default function FlightForm() {
       try {
         const pricingData = await getPricingConfig();
         setCurrentMarkup(pricingData?.global_markup_percentage || 0);
+        setNewMarkup(String(pricingData?.global_markup_percentage || ""));
       } catch (err) {
         console.error("Failed to fetch pricing config:", err);
       } finally {
@@ -49,6 +54,18 @@ export default function FlightForm() {
     };
     fetchPricingConfig();
   }, []);
+
+  // Recalculate final price when override price or markup changes
+  useEffect(() => {
+    if (formData.overridePrice && currentMarkup !== null) {
+      const markupMultiplier = 1 + (parseFloat(currentMarkup) / 100);
+      const newFinalPrice = parseFloat(formData.overridePrice) * markupMultiplier;
+      setFormData((prev) => ({
+        ...prev,
+        finalPrice: newFinalPrice.toFixed(2),
+      }));
+    }
+  }, [formData.overridePrice, currentMarkup]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -67,6 +84,26 @@ export default function FlightForm() {
         ...prev,
         [name]: value,
       }));
+    }
+  };
+
+  const handleUpdateMarkup = async () => {
+    try {
+      setIsUpdatingMarkup(true);
+      await updatePricingConfig(newMarkup);
+      
+      // Refresh the pricing config - this will trigger the useEffect to recalculate final price
+      const pricingData = await getPricingConfig();
+      const updatedMarkup = pricingData?.global_markup_percentage || 0;
+      setCurrentMarkup(updatedMarkup);
+      setNewMarkup(String(updatedMarkup));
+      
+      setNotification({ message: "Global markup updated successfully!", type: "success" });
+      setOpenMarkupModal(false);
+    } catch (err) {
+      setNotification({ message: "Failed to update markup: " + err.message, type: "error" });
+    } finally {
+      setIsUpdatingMarkup(false);
     }
   };
 
@@ -133,228 +170,93 @@ export default function FlightForm() {
             <div className="border border-blue-200 rounded-lg p-5 bg-blue-50">
               <h3 className="text-sm font-semibold text-gray-800 mb-4"> Flight Details</h3>
               
-              {flightData?.type === "ROUND_TRIP" ? (
-                // ROUND TRIP DISPLAY
-                <div className="space-y-6">
-                  {/* Outbound Leg */}
-                  <div>
-                    <h4 className="font-medium text-gray-800 mb-3">Outbound Flight</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Airline</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.outbound?.airline || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Airline Code</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.outbound?.airline_code || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Flight Number</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.outbound?.flight_number || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Route</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.outbound?.route || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Departure</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.outbound?.departure_time
-                            ? new Date(snapshot.outbound.departure_time).toLocaleString()
-                            : "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Arrival</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.outbound?.arrival_time
-                            ? new Date(snapshot.outbound.arrival_time).toLocaleString()
-                            : "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Duration</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.outbound?.duration_minutes
-                            ? `${Math.floor(snapshot.outbound.duration_minutes / 60)}h ${snapshot.outbound.duration_minutes % 60}m`
-                            : "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Inbound Leg */}
-                  <div>
-                    <h4 className="font-medium text-gray-800 mb-3">Return Flight</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Airline</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.inbound?.airline || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Airline Code</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.inbound?.airline_code || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Flight Number</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.inbound?.flight_number || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Route</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.inbound?.route || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Departure</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.inbound?.departure_time
-                            ? new Date(snapshot.inbound.departure_time).toLocaleString()
-                            : "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Arrival</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.inbound?.arrival_time
-                            ? new Date(snapshot.inbound.arrival_time).toLocaleString()
-                            : "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">Duration</label>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
-                          {snapshot?.inbound?.duration_minutes
-                            ? `${Math.floor(snapshot.inbound.duration_minutes / 60)}h ${snapshot.inbound.duration_minutes % 60}m`
-                            : "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Shared Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-blue-200">
-                    <div>
-                      <label className="text-xs font-medium text-gray-600">Type</label>
-                      <p className="text-sm font-medium text-gray-900 mt-1">ROUND TRIP</p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600">Passengers (Adults)</label>
-                      <p className="text-sm font-medium text-gray-900 mt-1">
-                        {flightData?.adults || "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600">Base Price</label>
-                      <p className="text-sm font-medium text-gray-900 mt-1">
-                        ${snapshot?.base_price_usd || "0"}
-                      </p>
-                    </div>
-                  </div>
+              {/* ONE-WAY DISPLAY */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Type</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {flightData?.type || "N/A"}
+                  </p>
                 </div>
-              ) : (
-                // ONE-WAY DISPLAY
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Type</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {flightData?.type || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Passengers (Adults)</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {flightData?.adults || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Airline</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {snapshot?.airline || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Airline Code</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {snapshot?.airline_code || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Flight Number</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {snapshot?.flight_number || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Route</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {snapshot?.route || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Departure</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {snapshot?.departure_time
-                        ? new Date(snapshot.departure_time).toLocaleString()
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Arrival</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {snapshot?.arrival_time
-                        ? new Date(snapshot.arrival_time).toLocaleString()
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Duration</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {snapshot?.duration_minutes
-                        ? `${Math.floor(snapshot.duration_minutes / 60)}h ${snapshot.duration_minutes % 60}m`
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Base Price</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      ${snapshot?.base_price_usd || "0"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Final Price</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      ${snapshot?.final_price_usd || "0"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Estimated Price(MMK)</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      {snapshot?.price_estimate_min_mmk || "0"} MMK - {snapshot?.price_estimate_max_mmk || "0"} MMK
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">Estimated Price Max (USD)</label>
-                    <p className="text-sm font-medium text-gray-900 mt-1">
-                      ${snapshot?.price_estimate_max_usd || "0"} - ${snapshot?.price_estimate_max_usd || "0"}
-                    </p>
-                  </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Passengers (Adults)</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {flightData?.adults || "N/A"}
+                  </p>
                 </div>
-              )}
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Airline</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {snapshot?.airline || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Airline Code</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {snapshot?.airline_code || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Flight Number</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {snapshot?.flight_number || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Route</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {snapshot?.route || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Departure</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {snapshot?.departure_time
+                      ? new Date(snapshot.departure_time).toLocaleString()
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Arrival</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {snapshot?.arrival_time
+                      ? new Date(snapshot.arrival_time).toLocaleString()
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Duration</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {snapshot?.duration_minutes
+                      ? `${Math.floor(snapshot.duration_minutes / 60)}h ${snapshot.duration_minutes % 60}m`
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Base Price</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    ${snapshot?.base_price_usd || "0"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Final Price</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    ${formData.finalPrice || formData.overridePrice || snapshot?.final_price_usd || "0"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Estimated Price(MMK)</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {snapshot?.price_estimate_min_mmk || "0"} MMK - {snapshot?.price_estimate_max_mmk || "0"} MMK
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Estimated Price Max (USD)</label>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    ${snapshot?.price_estimate_max_usd || "0"} - ${snapshot?.price_estimate_max_usd || "0"}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Price Management - Editable */}
@@ -429,17 +331,29 @@ export default function FlightForm() {
                   <label className="block text-xs font-medium text-gray-700 mb-2">
                     Global Markup %
                   </label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      %
-                    </span>
-                    <input
-                      type="text"
-                      value={markupLoading ? "Loading..." : currentMarkup || "0"}
-                      disabled
-                      className="w-full px-4 py-2 pr-7 border border-gray-300 rounded-lg bg-blue-50 text-blue-700 font-semibold text-sm"
-                      readOnly
-                    />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        %
+                      </span>
+                      <input
+                        type="text"
+                        value={markupLoading ? "Loading..." : currentMarkup || "0"}
+                        disabled
+                        className="w-full px-4 py-2 pr-7 border border-gray-300 rounded-lg bg-blue-50 text-blue-700 font-semibold text-sm"
+                        readOnly
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenMarkupModal(true);
+                        setNewMarkup(String(currentMarkup || ""));
+                      }}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
+                    >
+                      Update
+                    </button>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">System config</p>
                 </div>
@@ -508,6 +422,78 @@ export default function FlightForm() {
           </form>
         </div>
       </div>
+
+      {/* ========================= Markup Update Modal ========================= */}
+      {openMarkupModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={() => setOpenMarkupModal(false)}
+        >
+          <div
+            className="bg-white w-full max-w-md rounded-lg shadow-lg p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Update Global Markup</h2>
+              <button onClick={() => setOpenMarkupModal(false)} className="text-2xl">×</button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Markup Percentage
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    %
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={newMarkup}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d*\.?\d*$/.test(value)) {
+                        setNewMarkup(value);
+                      }
+                    }}
+                    className="w-full px-4 py-2 pr-7 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="Enter new percentage"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Current: {currentMarkup}%</p>
+              </div>
+
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
+                {newMarkup && newMarkup !== String(currentMarkup) ? (
+                  <p>Markup will change from {currentMarkup}% to {newMarkup}%</p>
+                ) : (
+                  <p>Enter a different value to update</p>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setOpenMarkupModal(false)}
+                className="px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateMarkup}
+                disabled={isUpdatingMarkup || !newMarkup}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition disabled:bg-gray-400"
+              >
+                {isUpdatingMarkup ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

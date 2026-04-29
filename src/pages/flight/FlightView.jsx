@@ -164,19 +164,12 @@ export default function FlightView() {
         </div>
 
         {/* ================= Footer ================= */}
-        <div className="p-5 border-t bg-gray-50 flex justify-between">
+        <div className="p-5 border-t bg-gray-50 flex justify-end">
           <button
             onClick={() => navigate(-1)}
             className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100"
           >
             Close
-          </button>
-
-          <button
-            onClick={() => navigate("/admin/flights")}
-            className="px-4 py-2 bg-black text-white rounded-lg"
-          >
-            Back to Flights
           </button>
         </div>
 

@@ -65,16 +65,20 @@ export const router = createBrowserRouter([
         element: <FlightOverride />,
       },
       {
-        path: "users",
-        element: <UserManagement />,
+        path: "users/:id/edit",
+        element:<UserEdit /> ,
       },
       {
         path: "users/:id",
         element: <UserView />,
       },
       {
-        path: "users/:id/edit",
-        element: <UserEdit />,
+        path: "users",
+        element:(
+          <RequireRole role="SUPER_ADMIN">      
+            <UserManagement />
+          </RequireRole>
+        ),      
       },
       {
         path: "staff",

@@ -11,6 +11,7 @@ const navItemClass = ({ isActive }) =>
 export default function AdminSidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { hasRole } = useAuth(); 
 
   const handleLogout = () => {
     logout();
@@ -36,17 +37,24 @@ export default function AdminSidebar() {
           Flight Management
         </NavLink>
 
-        <NavLink to="/admin/users" className={navItemClass}>
-          User Management
-        </NavLink>
+        {hasRole("SUPER_ADMIN") && (
+          <NavLink to="/admin/users" className={navItemClass}>
+            User Management
+          </NavLink>
+        )}
 
-        <NavLink to="/admin/staff" className={navItemClass}>
-          Staff Management
-        </NavLink>
+        {hasRole("SUPER_ADMIN") && (
+          <NavLink to="/admin/staff" className={navItemClass}>
+            Staff Management
+          </NavLink>
+        )}
 
-        <NavLink to="/admin/content" className={navItemClass}>
-          Content Management
-        </NavLink>
+        {hasRole("SUPER_ADMIN") && (
+          <NavLink to="/admin/content" className={navItemClass}>
+            Content Management
+          </NavLink>
+        )}
+
       </nav>
 
       <button

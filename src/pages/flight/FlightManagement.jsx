@@ -13,7 +13,6 @@ import Notification from "../../components/Notification";
 export default function FlightManagement() {
   const navigate = useNavigate();
   const { hasRole } = useAuth(); 
-  const isAdmin = hasRole("ADMIN") || hasRole("SUPER_ADMIN");  // Check if admin
 
   // Modal State
   const [openCurrencyModal, setOpenCurrencyModal] = useState(false);
@@ -277,15 +276,15 @@ export default function FlightManagement() {
         <div className="p-2 border-b border-blue-200">
           <div className="flex items-center justify-end">
             <div className="flex gap-3">
-              {isAdmin && (
                 <>
+                {hasRole("SUPER_ADMIN") && (
                   <button
                     onClick={() => navigate("/admin/overrides")}
                     className="border border-blue-200 px-4 py-2 text-sm rounded-lg bg-[#bedbff] hover:bg-blue-50 font-medium transition"
                   >
                     View Overrides
                   </button>
-
+                )}
                   <button
                     onClick={() => setOpenCurrencyModal(true)}
                     className="border border-blue-200 px-4 py-2 text-sm rounded-lg bg-[#bedbff] hover:bg-blue-50 font-medium transition"
@@ -299,7 +298,6 @@ export default function FlightManagement() {
                     Pricing Configuration
                   </button>
                 </>
-              )}
             </div>
           </div>
         </div>
@@ -515,21 +513,21 @@ export default function FlightManagement() {
                               </svg>
                             </button>
 
-                            {isAdmin && (
-                              <button
-                                onClick={() => {
-                                  navigate(
-                                    `/admin/flights/${flight.bundle_key}/flight-edit`,
-                                    {
-                                      state: {
-                                        flightData: flight,
-                                        mode: "create",
-                                      },
-                                    }
-                                  );
-                                }}
-                                className="w-8 h-8 flex items-center justify-center border border-blue-200 rounded-lg text-gray-600 hover:bg-blue-50 transition"
-                                title="Edit">
+                          {hasRole("SUPER_ADMIN") && (
+                            <button
+                              onClick={() => {
+                                navigate(
+                                  `/admin/flights/${flight.bundle_key}/flight-edit`,
+                                  {
+                                    state: {
+                                      flightData: flight,
+                                      mode: "create",
+                                    },
+                                  }
+                                );
+                              }}
+                              className="w-8 h-8 flex items-center justify-center border border-blue-200 rounded-lg text-gray-600 hover:bg-blue-50 transition"
+                              title="Edit">
                                   <svg
                                   className="w-4 h-4"
                                   fill="none"
@@ -586,7 +584,9 @@ export default function FlightManagement() {
                   <tr className="bg-blue-50 border border-blue-200">
                     <th className="border border-blue-200 p-3 text-left font-semibold">Currency</th>
                     <th className="border border-blue-200 p-3 text-left font-semibold">Current Rate (to MMK)</th>
-                    <th className="border border-blue-200 p-3 text-left font-semibold">New Rate</th>
+                    {hasRole("SUPER_ADMIN") && (
+                      <th className="border border-blue-200 p-3 text-left font-semibold">New Rate</th>
+                    )}
                     <th className="border border-blue-200 p-3 text-left font-semibold">Last Updated</th>
                   </tr>
                 </thead>
@@ -594,20 +594,22 @@ export default function FlightManagement() {
                   <tr className="border border-blue-200 hover:bg-blue-50">
                     <td className="border border-blue-200 p-3">USD</td>
                     <td className="border border-blue-200 p-3 font-medium">{currentRate || 0}</td>
-                    <td className="border border-blue-200 p-3">
-                      <input
-                        type="text"
-                        value={usdToMmkRate}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^\d*\.?\d*$/.test(value)) {
-                            setUsdToMmkRate(value);
-                          }
-                        }}
-                        className="border border-blue-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        placeholder="Enter new rate"
-                      />
-                    </td>
+                    {hasRole("SUPER_ADMIN") && (
+                      <td className="border border-blue-200 p-3">
+                        <input
+                          type="text"
+                          value={usdToMmkRate}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^\d*\.?\d*$/.test(value)) {
+                              setUsdToMmkRate(value);
+                            }
+                          }}
+                          className="border border-blue-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          placeholder="Enter new rate"
+                        />
+                      </td>
+                    )}
                     <td className="border border-blue-200 p-3 text-sm text-gray-600">
                       {formatDate(lastUpdated)}
                     </td>
@@ -625,12 +627,14 @@ export default function FlightManagement() {
                 Cancel
               </button>
 
-              <button
-                onClick={handleUpdateRate}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
-              >
-                Update Rate
-              </button>
+              {hasRole("SUPER_ADMIN") && (
+                <button
+                  onClick={handleUpdateRate}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+                >
+                  Update Rate
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -659,7 +663,9 @@ export default function FlightManagement() {
                   <tr className="bg-blue-50 border border-blue-200">
                     <th className="border border-blue-200 p-3 text-left font-semibold">Configuration</th>
                     <th className="border border-blue-200 p-3 text-left font-semibold">Current Value</th>
-                    <th className="border border-blue-200 p-3 text-left font-semibold">New Value</th>
+                    {hasRole("SUPER_ADMIN") && (
+                      <th className="border border-blue-200 p-3 text-left font-semibold">New Value</th>
+                    )}
                     <th className="border border-blue-200 p-3 text-left font-semibold">Last Updated</th>
                   </tr>
                 </thead>
@@ -667,20 +673,22 @@ export default function FlightManagement() {
                   <tr className="border border-blue-200 hover:bg-blue-50">
                     <td className="border border-blue-200 p-3 font-medium">Global Markup Percentage</td>
                     <td className="border border-blue-200 p-3 font-medium">{currentMarkup || 0}%</td>
-                    <td className="border border-blue-200 p-3">
-                      <input
-                        type="text"
-                        value={globalMarkup}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^\d*\.?\d*$/.test(value)) {
-                            setGlobalMarkup(value);
-                          }
-                        }}
-                        className="border border-blue-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        placeholder="Enter markup percentage"
-                      />
-                    </td>
+                    {hasRole("SUPER_ADMIN") && (
+                      <td className="border border-blue-200 p-3">
+                        <input
+                          type="text"
+                          value={globalMarkup}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^\d*\.?\d*$/.test(value)) {
+                              setGlobalMarkup(value);
+                            }
+                          }}
+                          className="border border-blue-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          placeholder="Enter markup percentage"
+                        />
+                      </td>
+                    )}
                     <td className="border border-blue-200 p-3 text-sm text-gray-600">
                       {formatDate(pricingUpdatedAt)}
                     </td>
@@ -698,12 +706,14 @@ export default function FlightManagement() {
                 Cancel
               </button>
 
-              <button
-                onClick={handleUpdatePricingConfig}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
-              >
-                Update Configuration
-              </button>
+              {hasRole("SUPER_ADMIN") && (
+                <button
+                  onClick={handleUpdatePricingConfig}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+                >
+                  Update Configuration
+                </button>
+              )}
             </div>
           </div>
         </div>
