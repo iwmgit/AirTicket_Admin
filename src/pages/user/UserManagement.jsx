@@ -12,6 +12,45 @@ export default function UserManagement() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [notification, setNotification] = useState({ message: "", type: "success" });
+  const [searchText, setSearchText] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterLastActive, setFilterLastActive] = useState("");
+  const [filterRegDate, setFilterRegDate] = useState("");
+
+  const getDateRangeStart = (range) => {
+    const now = new Date();
+    switch (range) {
+      case "today": { const d = new Date(now); d.setHours(0,0,0,0); return d; }
+      case "7days": return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      case "30days": return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      case "3months": return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      case "year": return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      default: return null;
+    }
+  };
+
+  const filteredUsers = users.filter((user) => {
+    const search = searchText.trim().toLowerCase();
+    if (search) {
+      const name = (user.full_name || "").toLowerCase();
+      const email = (user.email || "").toLowerCase();
+      if (!name.includes(search) && !email.includes(search)) return false;
+    }
+    if (filterStatus) {
+      const isActive = user.is_active === true;
+      if (filterStatus === "active" && !isActive) return false;
+      if (filterStatus === "inactive" && isActive) return false;
+    }
+    if (filterLastActive) {
+      const rangeStart = getDateRangeStart(filterLastActive);
+      if (rangeStart && (!user.updated_at || new Date(user.updated_at) < rangeStart)) return false;
+    }
+    if (filterRegDate) {
+      const rangeStart = getDateRangeStart(filterRegDate);
+      if (rangeStart && (!user.created_at || new Date(user.created_at) < rangeStart)) return false;
+    }
+    return true;
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -100,6 +139,8 @@ export default function UserManagement() {
                 Search Users
               </label>
               <input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Name, email..."
                 className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
@@ -107,19 +148,14 @@ export default function UserManagement() {
 
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-              <select className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <option>Select Status</option>
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Last Active
-              </label>
-              <select className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <option>Select time range</option>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">Select Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
             </div>
 
@@ -127,13 +163,25 @@ export default function UserManagement() {
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Registration Date
               </label>
-              <select className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <option>Select date range</option>
+              <select
+                value={filterRegDate}
+                onChange={(e) => setFilterRegDate(e.target.value)}
+                className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">Select date range</option>
+                <option value="today">Today</option>
+                <option value="7days">Last 7 Days</option>
+                <option value="30days">Last 30 Days</option>
+                <option value="3months">Last 3 Months</option>
+                <option value="year">Last Year</option>
               </select>
             </div>
 
-            <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg font-medium transition">
-              Apply Filters
+            <button
+              onClick={() => { setSearchText(""); setFilterStatus(""); setFilterLastActive(""); setFilterRegDate(""); }}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg font-medium transition"
+            >
+              Clear Filters
             </button>
           </div>
         </div>
@@ -153,7 +201,7 @@ export default function UserManagement() {
             </thead>
 
             <tbody className="divide-y divide-gray-100">
-              {users.map((user) => {
+              {filteredUsers.map((user) => {
                 const isActive = user.is_active === true;
                 const registrationDate = new Date(user.created_at).toLocaleDateString(
                   "en-US",
@@ -281,7 +329,7 @@ export default function UserManagement() {
         {/* Footer */}
         <div className="px-4 py-3 border-t border-blue-200 bg-gray-50">
           <p className="text-xs text-gray-500">
-            Showing {users.length} of {users.length} users
+            Showing {filteredUsers.length} of {users.length} users
           </p>
         </div>
       </div>

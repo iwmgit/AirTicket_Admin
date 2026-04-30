@@ -230,7 +230,7 @@ export default function BookingEdit() {
         <div className="p-5 border-b border-blue-200">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Booking</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Ticket</h1>
               <p className="text-sm text-gray-600 mt-1">{booking.booking_code}</p>
             </div>
             <button
@@ -289,114 +289,118 @@ export default function BookingEdit() {
 
           {/* Ticket File Management Section */}
           <section className="border-t border-blue-200 pt-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Ticket File Management</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Ticket File Management</h2>
 
-            {/* Current Ticket File Info */}
-            <div className="mb-6">
-              <p className="text-sm font-medium text-gray-700 mb-3">Current Ticket File</p>
+              {/* Current ticket status badge */}
               {ticketStatus ? (
                 ticketStatus.has_ticket ? (
-                  <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium border border-green-200">
-                      ✓ Uploaded
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-600">
-                        {new Date(ticketStatus.ticket_uploaded_at).toLocaleString()}
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+                    <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span className="text-xs font-medium text-green-700">Ticket uploaded</span>
+                    {ticketStatus.ticket_uploaded_at && (
+                      <span className="text-xs text-gray-400">
+                        · {new Date(ticketStatus.ticket_uploaded_at).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                 ) : (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium border border-yellow-200">
-                      ⚠ Not Uploaded
-                    </span>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <svg className="w-3.5 h-3.5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                    <span className="text-xs font-medium text-yellow-700">No ticket uploaded</span>
                   </div>
                 )
               ) : (
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <p className="text-sm text-gray-600 animate-pulse">Loading...</p>
+                <div className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg">
+                  <span className="text-xs text-gray-400 animate-pulse">Checking...</span>
                 </div>
               )}
             </div>
 
-            {/* Upload New Ticket Section */}
-            {!hasTicketUrl && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Upload Ticket File</h3>
-                <p className="text-xs text-gray-600 mb-4">
-                  Upload a new ticket file for this booking
-                </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                <div className="space-y-3">
+              {/* Upload Card */}
+              <div className={`flex flex-col rounded-xl border overflow-hidden ${hasTicketUrl ? "border-gray-200 opacity-50 pointer-events-none" : "border-blue-200"}`}>
+                <div className="bg-blue-50 px-4 py-3 border-b border-blue-200">
+                  <p className="text-sm font-semibold text-gray-800">Upload Ticket</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Add a new ticket file</p>
+                </div>
+                <div className="flex flex-col flex-1 p-4 gap-3 bg-white">
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx,.zip"
                     onChange={handleUploadFileChange}
-                    disabled={updating}
-                    className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    disabled={updating || hasTicketUrl}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
+                  {uploadFile && (
+                    <p className="text-xs text-gray-500 truncate">
+                      <span className="font-medium">{uploadFile.name}</span>
+                    </p>
+                  )}
                   <button
                     onClick={handleUploadNewTicket}
-                    disabled={updating || !uploadFile}
-                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
+                    disabled={updating || !uploadFile || hasTicketUrl}
+                    className="mt-auto w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     {updating ? "Uploading..." : "Upload"}
                   </button>
-
-                  {uploadFile && (
-                    <p className="text-xs text-gray-600">
-                      File selected: <span className="font-medium">{uploadFile.name}</span>
-                    </p>
-                  )}
                 </div>
               </div>
-            )}
 
-            {/* Replace Ticket File Section */}
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-semibold text-gray-800 mb-2">Replace Ticket File</h3>
-              <p className="text-xs text-gray-600 mb-4">
-                Select a new file to replace the current ticket
-              </p>
-
-              <div className="space-y-3">
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,.zip"
-                  onChange={handleTicketFileChange}
-                  disabled={updating}
-                  className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <button
-                  onClick={handleReplaceTicket}
-                  disabled={updating || !ticketFile}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
-                >
-                  {updating ? "Uploading..." : "Replace"}
-                </button>
-
-                {ticketFile && (
-                  <p className="text-xs text-gray-600">
-                    File selected: <span className="font-medium">{ticketFile.name}</span>
-                  </p>
-                )}
+              {/* Replace Card */}
+              <div className="flex flex-col rounded-xl border border-blue-200 overflow-hidden">
+                <div className="bg-blue-50 px-4 py-3 border-b border-blue-200">
+                  <p className="text-sm font-semibold text-gray-800">Replace Ticket</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Swap the existing file</p>
+                </div>
+                <div className="flex flex-col flex-1 p-4 gap-3 bg-white">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.zip"
+                    onChange={handleTicketFileChange}
+                    disabled={updating}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  {ticketFile && (
+                    <p className="text-xs text-gray-500 truncate">
+                      <span className="font-medium">{ticketFile.name}</span>
+                    </p>
+                  )}
+                  <button
+                    onClick={handleReplaceTicket}
+                    disabled={updating || !ticketFile}
+                    className="mt-auto w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    {updating ? "Uploading..." : "Replace"}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Delete Ticket File Section */}
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <h3 className="font-semibold text-gray-800 mb-2">Delete Ticket File</h3>
-              <p className="text-xs text-gray-600 mb-4">
-                This action will permanently delete the ticket file. This cannot be undone.
-              </p>
-              <button
-                onClick={handleDeleteTicket}
-                disabled={updating}
-                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed transition"
-              >
-                {updating ? "Deleting..." : "Delete Ticket File"}
-              </button>
+              {/* Delete Card */}
+              <div className="flex flex-col rounded-xl border border-blue-200 overflow-hidden">
+                <div className="bg-blue-50 px-4 py-3 border-b border-blue-200">
+                  <p className="text-sm font-semibold text-gray-800">Delete Ticket</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Remove permanently</p>
+                </div>
+                <div className="flex flex-col flex-1 p-4 bg-white">
+                  <p className="text-xs text-gray-500 mb-4 flex-1">
+                    This will permanently delete the ticket file for this booking. This action cannot be undone.
+                  </p>
+                  <button
+                    onClick={handleDeleteTicket}
+                    disabled={updating}
+                    className="mt-auto w-full px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    {updating ? "Deleting..." : "Delete Ticket File"}
+                  </button>
+                </div>
+              </div>
+
             </div>
           </section>
         </div>

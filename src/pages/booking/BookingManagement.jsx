@@ -33,6 +33,10 @@ export default function BookingManagement() {
     loading: false,
   });
   const [deleteConfirmationId, setDeleteConfirmationId] = useState(null);
+  const [searchText, setSearchText] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterRoute, setFilterRoute] = useState("");
+  const [filterDateRange, setFilterDateRange] = useState("");
 
   const adminEmail = "admin@example.com";
 
@@ -345,6 +349,41 @@ export default function BookingManagement() {
     return onewayRoute || "-";
   };
 
+  const getDateRangeStart = (range) => {
+    const now = new Date();
+    switch (range) {
+      case "today": { const d = new Date(now); d.setHours(0,0,0,0); return d; }
+      case "7days": return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      case "30days": return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      case "3months": return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      default: return null;
+    }
+  };
+
+  const uniqueRoutes = [...new Set(bookings.map((b) => extractRoute(b)).filter((r) => r && r !== "-"))];
+
+  const filteredBookings = bookings.filter((booking) => {
+    const search = searchText.trim().toLowerCase();
+    if (search) {
+      const code = (booking.booking_code || "").toLowerCase();
+      const name = (booking.user?.name || "").toLowerCase();
+      const email = (booking.user?.email || "").toLowerCase();
+      if (!code.includes(search) && !name.includes(search) && !email.includes(search)) return false;
+    }
+    if (filterStatus && (booking.status || "").toUpperCase() !== filterStatus) return false;
+    if (filterRoute && extractRoute(booking) !== filterRoute) return false;
+    if (filterDateRange) {
+      const rangeStart = getDateRangeStart(filterDateRange);
+      if (rangeStart) {
+        const depTime =
+          booking.flight_snapshot?.outbound?.departure_time ||
+          booking.flight_snapshot?.departure_time;
+        if (!depTime || new Date(depTime) < rangeStart) return false;
+      }
+    }
+    return true;
+  });
+
   if (loading) {
     return <div className="p-6 text-center">Loading bookings...</div>;
   }
@@ -365,6 +404,8 @@ return (
               Search Bookings
             </label>
             <input
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
               className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               placeholder="Booking ID, Customer name, Email..."
             />
@@ -374,10 +415,14 @@ return (
             <label className="block text-xs font-medium text-gray-700 mb-1">
               Status
             </label>
-            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none">
-              <option>Select Status</option>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none"
+            >
+              <option value="">Select Status</option>
               {BOOKING_STATUS_OPTIONS.map((status) => (
-                <option key={status}>{status}</option>
+                <option key={status} value={status}>{status}</option>
               ))}
             </select>
           </div>
@@ -386,8 +431,15 @@ return (
             <label className="block text-xs font-medium text-gray-700 mb-1">
               Route
             </label>
-            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none">
-              <option>Select Route</option>
+            <select
+              value={filterRoute}
+              onChange={(e) => setFilterRoute(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none"
+            >
+              <option value="">Select Route</option>
+              {uniqueRoutes.map((route) => (
+                <option key={route} value={route}>{route}</option>
+              ))}
             </select>
           </div>
 
@@ -395,19 +447,32 @@ return (
             <label className="block text-xs font-medium text-gray-700 mb-1">
               Date Range
             </label>
-            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none">
-              <option>Select date range</option>
+            <select
+              value={filterDateRange}
+              onChange={(e) => setFilterDateRange(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none"
+            >
+              <option value="">Select date range</option>
+              <option value="today">Today</option>
+              <option value="7days">Last 7 Days</option>
+              <option value="30days">Last 30 Days</option>
+              <option value="3months">Last 3 Months</option>
             </select>
           </div>
 
-          <button className="bg-blue-500 text-white px-5 py-2 rounded-lg text-sm font-medium shadow hover:bg-blue-600 transition">
-            Apply Filters
+          <button
+            onClick={() => { setSearchText(""); setFilterStatus(""); setFilterRoute(""); setFilterDateRange(""); }}
+            className="bg-blue-500 text-white px-5 py-2 rounded-lg text-sm font-medium shadow hover:bg-blue-600 transition"
+          >
+            Clear Filters
           </button>
         </div>
 
         <div className="mt-5">
           <h2 className="text-lg font-semibold text-gray-800">All Bookings</h2>
-          <p className="text-sm text-gray-500">Showing all bookings</p>
+          <p className="text-sm text-gray-500">
+            Showing {filteredBookings.length} of {bookings.length} bookings
+          </p>
         </div>
       </div>
 
@@ -429,7 +494,7 @@ return (
           </thead>
 
           <tbody className="divide-y divide-gray-100">
-            {bookings.map((booking) => {
+            {filteredBookings.map((booking) => {
               const isUpdating = updatingBookingId === booking.booking_id;
               const paymentStatus = (booking.payment_status || "").toUpperCase();
               const bookingStatus = (booking.status || "").toUpperCase();

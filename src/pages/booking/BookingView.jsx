@@ -286,57 +286,45 @@ export default function BookingView() {
           <section className="border-t border-blue-200 pt-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Ticket File</h2>
             {ticketStatus ? (
-              <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                {ticketStatus.has_ticket ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium border border-green-200">
-                         Uploaded
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs font-medium text-gray-600 mb-1">Upload Time</p>
-                        <p className="text-sm text-gray-900 font-medium">
-                          {new Date(ticketStatus.ticket_uploaded_at).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between pt-4 border-t border-blue-200">
-                      <p className="text-sm text-gray-700">Download uploaded ticket</p>
-                      <button
-                        disabled={downloading}
-                        onClick={handleDownloadTicket}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium disabled:opacity-60 transition"
-                      >
-                        {downloading ? "Downloading..." : "Download"}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium border border-yellow-200">
-                         Pending
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-700">
-                      No ticket file has been uploaded for this booking yet. Go to the Edit page to upload or manage the ticket.
+              ticketStatus.has_ticket ? (
+                <div className="inline-flex flex-col gap-3 border border-blue-200 rounded-lg p-4 bg-blue-50 min-w-[240px]">
+                  <span className="inline-block w-fit px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium border border-green-200">
+                    Uploaded
+                  </span>
+                  <div>
+                    <p className="text-xs text-gray-500">Upload Time</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {new Date(ticketStatus.ticket_uploaded_at).toLocaleString()}
                     </p>
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        onClick={() => navigate(`/admin/bookings/${bookingId}/booking-edit`)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition"
-                      >
-                        Manage Ticket
-                      </button>
-                    </div>
                   </div>
-                )}
-              </div>
+                  <button
+                    disabled={downloading}
+                    onClick={handleDownloadTicket}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-60 transition w-fit"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4"/>
+                    </svg>
+                    {downloading ? "Downloading..." : "Download Ticket"}
+                  </button>
+                </div>
+              ) : (
+                <div className="inline-flex flex-col gap-3 border border-blue-200 rounded-lg p-4 bg-blue-50 min-w-[240px]">
+                  <span className="inline-block w-fit px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium border border-yellow-200">
+                    Not Uploaded
+                  </span>
+                  <p className="text-sm text-gray-600">No ticket file uploaded yet.</p>
+                  <button
+                    onClick={() => navigate(`/admin/bookings/${bookingId}/booking-edit`)}
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition w-fit"
+                  >
+                    Manage Ticket
+                  </button>
+                </div>
+              )
             ) : (
-              <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                <p className="text-sm text-gray-600 animate-pulse">Loading ticket status...</p>
+              <div className="inline-flex border border-blue-200 rounded-lg p-4 bg-blue-50">
+                <p className="text-sm text-gray-500 animate-pulse">Loading ticket status...</p>
               </div>
             )}
           </section>

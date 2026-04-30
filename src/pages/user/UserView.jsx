@@ -55,9 +55,6 @@ export default function UserView() {
         <div className="p-6">
           {/* Profile */}
           <div className="flex items-start gap-5 pb-6 border-b border-blue-200">
-            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-medium">
-              {user.full_name.charAt(0)}
-            </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold">{user.full_name}</h3>
               <p className="text-gray-600 mt-1">{user.email}</p>
