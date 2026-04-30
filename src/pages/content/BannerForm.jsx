@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { transformImageUrl } from "../../config/api";
 
 const PRIORITY_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8];
-const DESTINATION_CODES = ["RGN", "MDL", "NYT", "BKK", "CNX", "DAD"]; // Add more as needed
 
 export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
   const [formData, setFormData] = useState({
@@ -124,7 +123,8 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Destination Code <span className="text-red-500">*</span>
             </label>
-            <select
+            <input
+              type="text"
               value={formData.destinationCode}
               onChange={(e) =>
                 setFormData({ ...formData, destinationCode: e.target.value })
@@ -134,15 +134,9 @@ export default function BannerForm({ banner, onSubmit, onCancel, isLoading }) {
                   ? "border-red-500 focus:ring-red-500"
                   : "border-blue-200 focus:ring-blue-400"
               }`}
+              placeholder="Enter destination code (e.g. RGN)"
               disabled={isLoading}
-            >
-              <option value="">Select a destination</option>
-              {DESTINATION_CODES.map((code) => (
-                <option key={code} value={code}>
-                  {code}
-                </option>
-              ))}
-            </select>
+            />
             {errors.destinationCode && (
               <p className="text-red-500 text-xs mt-1">
                 {errors.destinationCode}
