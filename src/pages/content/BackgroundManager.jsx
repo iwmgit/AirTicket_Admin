@@ -19,7 +19,11 @@ export default function BackgroundManager() {
       const data = await getBackgroundImage();
       setBackgroundImage(data);
     } catch (err) {
-      setNotification({ message: err.message || "Failed to load background image", type: "error" });
+      if (err.response?.status === 404) {
+        setBackgroundImage(null);
+      } else {
+        setNotification({ message: err.message || "Failed to load background image", type: "error" });
+      }
     } finally {
       setLoading(false);
     }

@@ -377,7 +377,7 @@ export const updateBackgroundImage = async (file) => {
 
 // Content Management - Banners
 export const getAllBanners = async () => {
-  const response = await apiClient.get("/content/banners/all");
+  const response = await apiClient.get("/content/banners");
   return response.data?.data ?? response.data;
 };
 
